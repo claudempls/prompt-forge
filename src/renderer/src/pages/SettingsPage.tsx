@@ -1,14 +1,58 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { AppState } from '../App'
-import { setApiKey, setLanguage } from '../lib/store'
+import { setLanguage, getDailyUsage, FREE_DAILY_LIMIT } from '../lib/store'
 
 const LANGUAGES = ['English', 'Čeština', '中文', 'Español', 'Deutsch', 'Français', 'Italiano', 'Português', 'Polski', '日本語']
-const PROVIDERS = [
-  { id: 'gemini',    label: 'Gemini',    sub: 'Flash 2.0', color: '#4285F4' },
-  { id: 'openai',    label: 'OpenAI',    sub: 'GPT-4o',    color: '#10a37f' },
-  { id: 'anthropic', label: 'Anthropic', sub: 'Claude',    color: '#c97d3a' },
-  { id: 'groq',      label: 'Groq',      sub: 'Llama 3',   color: '#f55036' }
+
+const PRO_FEATURES = [
+  { icon: '⚡', title: 'API included', desc: 'No key needed' },
+  { icon: '🔄', title: 'Sync', desc: 'Preferences everywhere' },
+  { icon: '📈', title: 'Priority models', desc: 'Fastest tiers' },
+  { icon: '♾️', title: 'Unlimited', desc: 'No rate limits' },
 ]
+
+const STRIPE_LINK = 'https://buy.stripe.com/test_14A5kD3aWbxq8223G1dIA01'
+
+function ProModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="absolute inset-0 z-50 flex items-center justify-center bg-forge-bg/80 backdrop-blur-sm px-6">
+      <div className="w-full max-w-sm bg-forge-surface border border-forge-border rounded-2xl p-5 shadow-card flex flex-col gap-4">
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="font-display text-2xl font-semibold text-forge-text">PromptForge Pro</p>
+            <div className="flex items-baseline gap-1 mt-0.5">
+              <span className="font-display text-3xl font-bold text-forge-accent-soft">$3</span>
+              <span className="text-forge-muted text-xs">/ month · cancel anytime</span>
+            </div>
+          </div>
+          <button onClick={onClose} className="text-forge-muted hover:text-forge-text mt-1">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M12 2L2 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          {PRO_FEATURES.map(f => (
+            <div key={f.title} className="bg-forge-bg border border-forge-border rounded-xl p-2.5 flex flex-col gap-0.5">
+              <span className="text-sm">{f.icon}</span>
+              <p className="text-xs font-semibold text-forge-text">{f.title}</p>
+              <p className="text-xs text-forge-muted">{f.desc}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => { window.open(STRIPE_LINK, '_blank'); onClose() }}
+            className="w-full py-2.5 rounded-xl bg-forge-accent hover:bg-forge-accent-soft text-white text-sm font-semibold transition-all flex items-center justify-center gap-2"
+          >
+            Subscribe — $3/month
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none"><path d="M3 6.5h7M7 3l3 3.5-3 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 interface Props {
   state: AppState
@@ -17,28 +61,33 @@ interface Props {
 }
 
 export default function SettingsPage({ state, update, onLogout }: Props) {
-  const [key, setKey] = useState(state.apiKey)
+  const [showPro, setShowPro] = useState(false)
   const [lang, setLang] = useState(state.language)
-  const [provider, setProvider] = useState('gemini')
   const [saved, setSaved] = useState(false)
-  const [showKey, setShowKey] = useState(false)
+  const [usageCount, setUsageCount] = useState(0)
+  const isPro = (state as AppState & { plan?: string }).plan === 'pro'
+
+  useEffect(() => {
+    getDailyUsage().then(u => setUsageCount(u.count))
+  }, [])
 
   async function handleSave() {
-    await setApiKey(key.trim())
     await setLanguage(lang)
-    await window.electron.store.set('provider', provider)
-    update({ apiKey: key.trim(), language: lang })
+    await window.electron.store.set('language', lang)
+    update({ language: lang })
     setSaved(true)
     setTimeout(() => setSaved(false), 2000)
   }
 
   async function handleLogout() {
-    await window.electron.store.set('apiKey', '')
+    await window.electron.store.set('plan', null)
     onLogout()
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full relative">
+      {showPro && <ProModal onClose={() => setShowPro(false)} />}
+
       <div className="drag-region h-10 flex-shrink-0 border-b border-forge-border flex items-center px-5">
         <span className="font-display text-base font-semibold text-forge-text/80">Settings</span>
       </div>
@@ -48,59 +97,43 @@ export default function SettingsPage({ state, update, onLogout }: Props) {
         {/* Plan */}
         <section className="bg-forge-surface border border-forge-border rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-forge-text">Plan</p>
-            <p className="text-xs text-forge-muted mt-0.5">Free — using your own API key</p>
+            <p className="text-sm font-medium text-forge-text">
+              {isPro ? 'Pro plan' : 'Free plan'}
+            </p>
+            {isPro ? (
+              <p className="text-xs text-forge-accent-soft mt-0.5">Unlimited · no rate limits</p>
+            ) : (
+              <p className="text-xs text-forge-muted mt-0.5">
+                {usageCount} / {FREE_DAILY_LIMIT} used today
+              </p>
+            )}
           </div>
-          <button className="text-xs px-3 py-1.5 rounded-xl bg-forge-accent/10 border border-forge-accent/25 text-forge-accent-soft hover:bg-forge-accent/15 transition-all">
-            Upgrade to Pro
-          </button>
-        </section>
-
-        {/* Provider */}
-        <section className="flex flex-col gap-3">
-          <p className="text-xs font-medium text-forge-muted uppercase tracking-widest">AI Provider</p>
-          <div className="grid grid-cols-2 gap-2">
-            {PROVIDERS.map((p) => (
-              <button
-                key={p.id}
-                onClick={() => setProvider(p.id)}
-                className={`px-3 py-2.5 rounded-xl text-sm border flex items-center gap-2 transition-all ${
-                  provider === p.id
-                    ? 'border-forge-accent/60 bg-forge-accent/8 text-forge-text'
-                    : 'border-forge-border bg-forge-surface text-forge-muted hover:border-forge-border-hi hover:text-forge-text'
-                }`}
-              >
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
-                <span className="font-medium">{p.label}</span>
-                <span className="text-xs text-forge-muted ml-auto">{p.sub}</span>
-              </button>
-            ))}
-          </div>
-        </section>
-
-        {/* API Key */}
-        <section className="flex flex-col gap-2">
-          <p className="text-xs font-medium text-forge-muted uppercase tracking-widest">API Key</p>
-          <div className="relative">
-            <input
-              type={showKey ? 'text' : 'password'}
-              value={key}
-              onChange={(e) => setKey(e.target.value)}
-              className="no-drag w-full bg-forge-bg border border-forge-border rounded-xl px-4 py-2.5 pr-10 text-sm text-forge-text placeholder:text-forge-muted focus:outline-none focus:border-forge-accent/60"
-              placeholder="Paste your API key…"
-            />
+          {!isPro && (
             <button
-              onClick={() => setShowKey((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-forge-muted hover:text-forge-text transition-colors"
+              onClick={() => setShowPro(true)}
+              className="text-xs px-3 py-1.5 rounded-xl bg-forge-accent/10 border border-forge-accent/25 text-forge-accent-soft hover:bg-forge-accent/15 transition-all"
             >
-              {showKey ? (
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 7s2-4 6-4 6 4 6 4-2 4-6 4-6-4-6-4z" stroke="currentColor" strokeWidth="1.2"/><circle cx="7" cy="7" r="1.5" stroke="currentColor" strokeWidth="1.2"/></svg>
-              ) : (
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M2 2l10 10M5.5 5.7A3 3 0 009.3 9.5M1 7s2-4 6-4c.9 0 1.7.2 2.4.5M13 7s-.8 1.8-2.4 2.9" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/></svg>
-              )}
+              Upgrade to Pro
             </button>
-          </div>
+          )}
         </section>
+
+        {/* Daily usage bar (free only) */}
+        {!isPro && (
+          <section className="flex flex-col gap-2">
+            <div className="flex justify-between text-xs text-forge-muted">
+              <span>Today's usage</span>
+              <span>{usageCount} / {FREE_DAILY_LIMIT}</span>
+            </div>
+            <div className="h-1.5 bg-forge-border rounded-full overflow-hidden">
+              <div
+                className="h-full bg-forge-accent rounded-full transition-all"
+                style={{ width: `${Math.min(100, (usageCount / FREE_DAILY_LIMIT) * 100)}%` }}
+              />
+            </div>
+            <p className="text-xs text-forge-muted/60">Resets at midnight</p>
+          </section>
+        )}
 
         {/* Language */}
         <section className="flex flex-col gap-2">
@@ -122,7 +155,7 @@ export default function SettingsPage({ state, update, onLogout }: Props) {
           </div>
         </section>
 
-        {/* Quick Mode shortcut info */}
+        {/* Quick Mode */}
         <section className="bg-forge-surface border border-forge-border rounded-2xl p-4 flex items-start gap-3">
           <div className="flex gap-1 flex-shrink-0 mt-0.5">
             <kbd className="text-xs px-1.5 py-0.5 rounded bg-forge-bg border border-forge-border text-forge-muted font-mono">⌥</kbd>
@@ -131,7 +164,7 @@ export default function SettingsPage({ state, update, onLogout }: Props) {
           <div>
             <p className="text-sm text-forge-text font-medium">Quick Mode</p>
             <p className="text-xs text-forge-muted leading-relaxed mt-0.5">
-              Option+Space opens the floating overlay anywhere — type a prompt, answer questions, and the enhanced result auto-pastes back to your previous app.
+              Option+Space opens the floating overlay anywhere — type a prompt, answer questions, and the enhanced result auto-pastes back.
             </p>
           </div>
         </section>
@@ -151,8 +184,8 @@ export default function SettingsPage({ state, update, onLogout }: Props) {
         {/* Danger zone */}
         <section className="border border-red-500/15 rounded-2xl p-4 flex items-center justify-between">
           <div>
-            <p className="text-sm text-forge-text">Reset account</p>
-            <p className="text-xs text-forge-muted mt-0.5">Clears API key and returns to setup</p>
+            <p className="text-sm text-forge-text">Reset app</p>
+            <p className="text-xs text-forge-muted mt-0.5">Returns to welcome screen</p>
           </div>
           <button
             onClick={handleLogout}
