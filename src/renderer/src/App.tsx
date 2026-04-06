@@ -16,6 +16,7 @@ export type ForgeScreen = 'home' | 'questions' | 'result'
 export interface AppState {
   apiKey: string
   language: string
+  provider: string
   originalPrompt: string
   questions: Question[]
   answers: Record<string, string | string[]>
@@ -29,6 +30,7 @@ export default function App() {
   const [state, setState] = useState<AppState>({
     apiKey: '',
     language: 'English',
+    provider: 'groq',
     originalPrompt: '',
     questions: [],
     answers: {},
@@ -41,7 +43,8 @@ export default function App() {
       const done = await isSetupDone()
       const lang = await getLanguage()
       const key = await getApiKey()
-      setState((s) => ({ ...s, language: lang, apiKey: key ?? '' }))
+      const provider = (await window.electron.store.get('provider') as string) ?? 'groq'
+      setState((s) => ({ ...s, language: lang, apiKey: key ?? '', provider }))
       setSetup(done)
     }
     init()

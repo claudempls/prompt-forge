@@ -41,8 +41,12 @@ const NAV: { id: NavTab; label: string; icon: JSX.Element }[] = [
     label: 'Settings',
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <circle cx="9" cy="9" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M9 1v2M9 15v2M1 9h2M15 9h2M3.1 3.1l1.4 1.4M13.5 13.5l1.4 1.4M14.9 3.1l-1.4 1.4M4.5 13.5l-1.4 1.4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="2" y1="5" x2="16" y2="5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="2" y1="9" x2="16" y2="9" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <line x1="2" y1="13" x2="16" y2="13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <circle cx="6" cy="5" r="1.8" fill="var(--forge-bg,#070710)" stroke="currentColor" strokeWidth="1.5"/>
+        <circle cx="12" cy="9" r="1.8" fill="var(--forge-bg,#070710)" stroke="currentColor" strokeWidth="1.5"/>
+        <circle cx="7" cy="13" r="1.8" fill="var(--forge-bg,#070710)" stroke="currentColor" strokeWidth="1.5"/>
       </svg>
     )
   }

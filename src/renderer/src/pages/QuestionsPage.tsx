@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { AppState } from '../App'
 import type { Question } from '../lib/gemini'
 import { enhancePrompt, extractPreferenceTags } from '../lib/gemini'
@@ -13,10 +13,15 @@ interface Props {
 export default function QuestionsPage({ state, update }: Props) {
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({})
   const [textInputs, setTextInputs] = useState<Record<string, string>>({})
+  const [currentIndex, setCurrentIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const { questions, originalPrompt, apiKey, language } = state
+  const current = questions[currentIndex]
+  const isLast = currentIndex === questions.length - 1
+  const answer = answers[current?.id]
+  const isAnswered = answer !== undefined && (Array.isArray(answer) ? answer.length > 0 : answer.trim().length > 0)
 
   function toggleSingle(qId: string, option: string) {
     setAnswers((a) => ({ ...a, [qId]: option }))
@@ -35,14 +40,45 @@ export default function QuestionsPage({ state, update }: Props) {
     setAnswers((a) => ({ ...a, [qId]: val }))
   }
 
-  function answeredCount() {
-    return questions.filter((q) => {
-      const ans = answers[q.id]
-      if (!ans) return false
-      if (Array.isArray(ans)) return ans.length > 0
-      return ans.trim().length > 0
-    }).length
+  function goNext() {
+    if (isLast) {
+      handleEnhance()
+    } else {
+      setCurrentIndex((i) => i + 1)
+    }
   }
+
+  function goBack() {
+    if (currentIndex === 0) {
+      update({ forgeScreen: 'home' })
+    } else {
+      setCurrentIndex((i) => i - 1)
+    }
+  }
+
+  // Keyboard shortcuts
+  const handleKey = useCallback((e: KeyboardEvent) => {
+    if (!current || loading) return
+    const opts = current.options ?? []
+
+    // Number keys to select option
+    const num = parseInt(e.key)
+    if (!isNaN(num) && num >= 1 && num <= opts.length) {
+      if (current.type === 'single') toggleSingle(current.id, opts[num - 1])
+      else if (current.type === 'multiple') toggleMultiple(current.id, opts[num - 1])
+      return
+    }
+
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      goNext()
+    }
+  }, [current, loading, isLast, answers])
+
+  useEffect(() => {
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [handleKey])
 
   async function handleEnhance() {
     setError('')
@@ -53,7 +89,6 @@ export default function QuestionsPage({ state, update }: Props) {
       update({ forgeScreen: 'result', answers, result })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.')
-    } finally {
       setLoading(false)
     }
   }
@@ -89,7 +124,9 @@ export default function QuestionsPage({ state, update }: Props) {
     } catch { /* non-critical */ }
   }
 
-  const progress = Math.round((answeredCount() / questions.length) * 100)
+  if (!current) return null
+
+  const progress = ((currentIndex) / questions.length) * 100
 
   return (
     <div className="flex flex-col h-full">
@@ -97,7 +134,7 @@ export default function QuestionsPage({ state, update }: Props) {
       <div className="drag-region h-10 flex-shrink-0 flex items-center px-5 border-b border-forge-border">
         <button
           className="no-drag ml-14 text-forge-muted hover:text-forge-text flex items-center gap-1.5 text-xs"
-          onClick={() => update({ forgeScreen: 'home' })}
+          onClick={goBack}
         >
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
@@ -105,7 +142,7 @@ export default function QuestionsPage({ state, update }: Props) {
           Back
         </button>
         <div className="flex-1 flex justify-center">
-          <span className="text-xs text-forge-muted">{answeredCount()} / {questions.length} answered</span>
+          <span className="text-xs text-forge-muted">{currentIndex + 1} / {questions.length}</span>
         </div>
         <div className="no-drag w-16" />
       </div>
@@ -115,134 +152,133 @@ export default function QuestionsPage({ state, update }: Props) {
         <div className="h-full bg-forge-accent transition-all duration-500" style={{ width: `${progress}%` }} />
       </div>
 
-      {/* Questions list */}
-      <div className="flex-1 overflow-y-auto px-6 py-6 flex flex-col gap-3">
-        <div className="text-center mb-3">
-          <h2 className="font-display text-3xl font-semibold text-forge-text">A few quick questions</h2>
-          <p className="text-xs text-forge-muted mt-1">Help us tailor your prompt perfectly</p>
-        </div>
+      {/* Question */}
+      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6">
+        <div className="w-full max-w-lg flex flex-col gap-5">
+          {/* Question text */}
+          <div className="flex flex-col gap-1">
+            <p className="text-xs text-forge-muted/60 uppercase tracking-widest">
+              Question {currentIndex + 1}
+            </p>
+            <h2 className="font-display text-2xl font-semibold text-forge-text leading-snug">
+              {current.text}
+            </h2>
+            <p className="text-xs text-forge-muted/70">
+              {current.type === 'single' && 'Choose one · press 1–' + (current.options?.length ?? 0)}
+              {current.type === 'multiple' && 'Choose all that apply · press 1–' + (current.options?.length ?? 0)}
+              {current.type === 'text' && 'Type your answer'}
+            </p>
+          </div>
 
-        {questions.map((q, i) => (
-          <QuestionCard
-            key={q.id}
-            question={q}
-            index={i}
-            answer={answers[q.id]}
-            textValue={textInputs[q.id] ?? ''}
-            onSingle={(opt) => toggleSingle(q.id, opt)}
-            onMultiple={(opt) => toggleMultiple(q.id, opt)}
-            onText={(val) => setTextAnswer(q.id, val)}
-          />
-        ))}
+          {/* Options */}
+          {current.type !== 'text' && current.options && (
+            <div className="flex flex-col gap-2">
+              {current.options.map((opt, i) => {
+                const selected = current.type === 'single'
+                  ? answer === opt
+                  : Array.isArray(answer) && answer.includes(opt)
+                return (
+                  <button
+                    key={opt}
+                    onClick={() => current.type === 'single' ? toggleSingle(current.id, opt) : toggleMultiple(current.id, opt)}
+                    className={`text-left px-4 py-3 rounded-2xl border transition-all flex items-center gap-3 ${
+                      selected
+                        ? 'border-forge-accent/60 bg-forge-accent/10 text-forge-text'
+                        : 'border-forge-border bg-forge-surface text-forge-muted hover:border-forge-border-hi hover:text-forge-text'
+                    }`}
+                  >
+                    <span className={`w-5 h-5 flex-shrink-0 flex items-center justify-center text-xs font-semibold rounded-md border transition-all ${
+                      selected ? 'bg-forge-accent border-forge-accent text-white' : 'border-forge-muted/40 text-forge-muted/60'
+                    }`}>
+                      {i + 1}
+                    </span>
+                    <span className="text-sm">{opt}</span>
+                    {selected && current.type === 'single' && (
+                      <svg className="ml-auto flex-shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M3 7l3 3 5-5" stroke="#c97d3a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          )}
 
-        <div className="flex flex-col items-center gap-2 mt-2 pb-2">
+          {/* Text input */}
+          {current.type === 'text' && (
+            <textarea
+              value={textInputs[current.id] ?? ''}
+              onChange={(e) => setTextAnswer(current.id, e.target.value)}
+              placeholder="Type your answer…"
+              autoFocus
+              className="no-drag w-full bg-forge-surface border border-forge-border rounded-2xl px-4 py-3 text-sm text-forge-text placeholder:text-forge-muted/60 focus:outline-none focus:border-forge-accent/50 min-h-[90px] resize-none"
+            />
+          )}
+
           {error && (
-            <p className="text-red-400/90 text-xs bg-red-500/8 border border-red-500/15 px-4 py-2 rounded-xl">{error}</p>
+            <p className="text-red-400/90 text-xs bg-red-500/8 border border-red-500/15 px-4 py-2 rounded-xl text-center">{error}</p>
           )}
-          <button
-            onClick={handleEnhance}
-            disabled={loading || answeredCount() === 0}
-            className="flex items-center gap-2 px-6 py-2.5 bg-forge-accent hover:bg-forge-accent-soft disabled:opacity-40 text-white text-sm font-medium rounded-xl transition-all"
-          >
-            {loading ? (
-              <>
-                <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                Forging your prompt…
-              </>
-            ) : (
-              <>
-                <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                  <path d="M7 2l1.5 3 3.5.5-2.5 2.5.5 3.5L7 10 3.5 11.5l.5-3.5L1.5 5.5 5 5z" stroke="white" strokeWidth="1.2" strokeLinejoin="round"/>
-                </svg>
-                Forge my prompt
-              </>
-            )}
-          </button>
-          {answeredCount() < questions.length && !loading && (
-            <p className="text-xs text-forge-muted/60">You can skip questions you're unsure about</p>
-          )}
+
+          {/* Actions */}
+          <div className="flex items-center justify-between">
+            <button
+              onClick={goNext}
+              disabled={loading}
+              className="text-xs text-forge-muted/50 hover:text-forge-muted transition-colors"
+            >
+              Skip
+            </button>
+
+            <button
+              onClick={goNext}
+              disabled={loading}
+              className="no-drag flex items-center gap-2 px-5 py-2.5 bg-forge-accent hover:bg-forge-accent-soft disabled:opacity-40 text-white text-sm font-medium rounded-xl transition-all"
+            >
+              {loading ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Forging…
+                </>
+              ) : isLast ? (
+                <>
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+                    <path d="M7 2l1.5 3 3.5.5-2.5 2.5.5 3.5L7 10 3.5 11.5l.5-3.5L1.5 5.5 5 5z" stroke="white" strokeWidth="1.2" strokeLinejoin="round"/>
+                  </svg>
+                  Forge my prompt
+                </>
+              ) : (
+                <>
+                  Next
+                  <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+                    <path d="M4 2l4 4-4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </>
+              )}
+            </button>
+          </div>
+
+          {/* Dot indicators */}
+          <div className="flex items-center justify-center gap-1.5">
+            {questions.map((q, i) => {
+              const ans = answers[q.id]
+              const done = ans !== undefined && (Array.isArray(ans) ? ans.length > 0 : (ans as string).trim().length > 0)
+              return (
+                <button
+                  key={q.id}
+                  onClick={() => setCurrentIndex(i)}
+                  className={`rounded-full transition-all ${
+                    i === currentIndex
+                      ? 'w-4 h-1.5 bg-forge-accent'
+                      : done
+                      ? 'w-1.5 h-1.5 bg-forge-accent/40'
+                      : 'w-1.5 h-1.5 bg-forge-border'
+                  }`}
+                />
+              )
+            })}
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-// ---- Question Card ----
-
-interface CardProps {
-  question: Question
-  index: number
-  answer: string | string[] | undefined
-  textValue: string
-  onSingle: (opt: string) => void
-  onMultiple: (opt: string) => void
-  onText: (val: string) => void
-}
-
-function QuestionCard({ question, index, answer, textValue, onSingle, onMultiple, onText }: CardProps) {
-  const isAnswered = answer !== undefined && (Array.isArray(answer) ? answer.length > 0 : answer.trim().length > 0)
-
-  return (
-    <div className={`bg-forge-surface border rounded-2xl p-4 flex flex-col gap-3 shadow-card transition-all ${
-      isAnswered ? 'border-forge-accent/35' : 'border-forge-border'
-    }`}>
-      {/* Header */}
-      <div className="flex items-start gap-3">
-        <span className="flex-shrink-0 w-6 h-6 rounded-full bg-forge-accent/12 text-forge-accent text-xs font-semibold flex items-center justify-center mt-0.5 border border-forge-accent/20">
-          {index + 1}
-        </span>
-        <div className="flex-1">
-          <p className="text-sm text-forge-text font-medium leading-snug">{question.text}</p>
-          <p className="text-xs text-forge-muted/70 mt-0.5">
-            {question.type === 'single' && 'Choose one'}
-            {question.type === 'multiple' && 'Choose all that apply'}
-            {question.type === 'text' && 'Free answer'}
-          </p>
-        </div>
-        {isAnswered && (
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none" className="flex-shrink-0 mt-0.5">
-            <circle cx="7.5" cy="7.5" r="6.5" fill="#c97d3a" fillOpacity="0.15"/>
-            <path d="M4.5 7.5l2 2 4-4" stroke="#c97d3a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        )}
-      </div>
-
-      {/* Options */}
-      {question.type !== 'text' && question.options && (
-        <div className="grid grid-cols-2 gap-1.5">
-          {question.options.map((opt) => {
-            const selected = question.type === 'single' ? answer === opt : Array.isArray(answer) && answer.includes(opt)
-            return (
-              <button
-                key={opt}
-                onClick={() => question.type === 'single' ? onSingle(opt) : onMultiple(opt)}
-                className={`text-left px-3 py-2 rounded-xl text-xs border transition-all ${
-                  selected
-                    ? 'border-forge-accent/60 bg-forge-accent/10 text-forge-accent-soft font-medium'
-                    : 'border-forge-border text-forge-muted hover:border-forge-border-hi hover:text-forge-text'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  <span className={`w-3 h-3 flex-shrink-0 border transition-all ${
-                    question.type === 'single' ? 'rounded-full' : 'rounded-sm'
-                  } ${selected ? 'bg-forge-accent border-forge-accent' : 'border-forge-muted/50'}`} />
-                  {opt}
-                </span>
-              </button>
-            )
-          })}
-        </div>
-      )}
-
-      {/* Text */}
-      {question.type === 'text' && (
-        <textarea
-          value={textValue}
-          onChange={(e) => onText(e.target.value)}
-          placeholder="Your answer…"
-          className="no-drag w-full bg-forge-bg border border-forge-border rounded-xl px-3 py-2 text-sm text-forge-text placeholder:text-forge-muted/60 focus:outline-none focus:border-forge-accent/50 min-h-[60px]"
-        />
-      )}
     </div>
   )
 }

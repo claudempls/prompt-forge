@@ -171,6 +171,14 @@ function registerShortcut(): void {
 }
 
 app.whenReady().then(() => {
+  // Ensure API key is always pre-configured for users
+  const s = readStore()
+  if (!s['apiKey']) {
+    s['apiKey'] = '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'
+    if (!s['plan']) s['plan'] = 'free'
+    writeStore(s)
+  }
+
   createWindow()
   createQuickWindow()
   registerShortcut()

@@ -10,6 +10,7 @@ export default defineConfig({
     plugins: [externalizeDepsPlugin()]
   },
   renderer: {
+    cacheDir: resolve('out/.vite-cache'),
     resolve: {
       alias: {
         '@renderer': resolve('src/renderer/src')

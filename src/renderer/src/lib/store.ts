@@ -26,6 +26,37 @@ export interface SessionSummary {
   keyAnswers: { question: string; answer: string }[]
 }
 
+export const FREE_DAILY_LIMIT = 5
+
+interface DailyUsage {
+  date: string
+  count: number
+}
+
+function todayStr(): string {
+  return new Date().toISOString().slice(0, 10)
+}
+
+export async function getDailyUsage(): Promise<DailyUsage> {
+  const usage = await store.get<DailyUsage>('dailyUsage')
+  const today = todayStr()
+  if (!usage || usage.date !== today) return { date: today, count: 0 }
+  return usage
+}
+
+export async function incrementDailyUsage(): Promise<void> {
+  const usage = await getDailyUsage()
+  await store.set('dailyUsage', { date: usage.date, count: usage.count + 1 })
+}
+
+export async function canUseToday(): Promise<{ allowed: boolean; remaining: number }> {
+  const plan = (await store.get<string>('plan')) ?? 'free'
+  if (plan === 'pro') return { allowed: true, remaining: Infinity }
+  const usage = await getDailyUsage()
+  const remaining = Math.max(0, FREE_DAILY_LIMIT - usage.count)
+  return { allowed: remaining > 0, remaining }
+}
+
 export async function getPreferences(): Promise<UserPreferences> {
   const prefs = await store.get<UserPreferences>('preferences')
   return prefs ?? { tags: {}, sessions: [] }
@@ -48,6 +79,6 @@ export async function setLanguage(lang: string): Promise<void> {
 }
 
 export async function isSetupDone(): Promise<boolean> {
-  const key = await getApiKey()
-  return !!key
+  const plan = await store.get<string>('plan')
+  return !!plan
 }

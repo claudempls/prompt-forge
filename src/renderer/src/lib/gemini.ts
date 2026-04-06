@@ -1,5 +1,4 @@
-import { GoogleGenerativeAI } from '@google/generative-ai'
-import { getPreferences } from './store'
+import { getPreferences, canUseToday, incrementDailyUsage } from './store'
 
 export interface Question {
   id: string
@@ -12,17 +11,44 @@ export interface EnhanceResult {
   enhancedPrompt: string
   explanation: string
   topicCategory: string
-  originalScore: number   // 1-10, how good the original was
-  enhancedScore: number   // 1-10, how good the enhanced is
+  originalScore: number
+  enhancedScore: number
+}
+
+const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
+const MODEL = 'llama-3.3-70b-versatile'
+
+async function groq(apiKey: string, systemPrompt: string, userMessage: string): Promise<string> {
+  const res = await fetch(GROQ_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: MODEL,
+      response_format: { type: 'json_object' },
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userMessage }
+      ]
+    })
+  })
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}))
+    throw new Error((err as { error?: { message?: string } }).error?.message ?? `Groq error ${res.status}`)
+  }
+  const data = await res.json() as { choices: { message: { content: string } }[] }
+  return data.choices[0].message.content.trim()
 }
 
 async function buildPrefsContext(language: string): Promise<string> {
   const prefs = await getPreferences()
-  if (prefs.sessions.length === 0) return `\nRespond in language: ${language}.`
+  if (prefs.sessions.length === 0) return `Respond in language: ${language}.`
   const tagLines = Object.entries(prefs.tags)
     .map(([k, v]) => `  - ${k}: ${v.join(', ')}`)
     .join('\n')
-  return `\n\nUSER PREFERENCES (learned from past sessions):\n${tagLines || '  (none yet)'}\nRespond in language: ${language}.`
+  return `USER PREFERENCES (learned from past sessions):\n${tagLines || '  (none yet)'}\nRespond in language: ${language}.`
 }
 
 export async function generateQuestions(
@@ -30,33 +56,34 @@ export async function generateQuestions(
   userPrompt: string,
   language: string
 ): Promise<Question[]> {
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
+  const { allowed, remaining } = await canUseToday()
+  if (!allowed) {
+    throw new Error(`Daily limit reached (${5}/day on free plan). Come back tomorrow or upgrade to Pro.`)
+  }
+  await incrementDailyUsage()
   const prefsCtx = await buildPrefsContext(language)
 
   const systemPrompt = `You are PromptForge, an expert at improving AI prompts.
-Analyze the user's prompt. If it is already specific and detailed enough to improve without any clarification, return an empty array: []
-Otherwise, generate up to 8 smart, PERSONAL clarifying questions — tailored specifically to this prompt, not generic.
-Only ask questions that will genuinely make the result significantly better.
+Analyze the user's prompt. If it is already specific and detailed enough, return {"questions": []}.
+Otherwise generate up to 8 smart, personal clarifying questions tailored to this prompt.
 ${prefsCtx}
 
-RULES:
-- Output ONLY a valid JSON array (no markdown, no explanation outside JSON)
-- If no questions needed → return exactly: []
-- Each question object: { "id": "q1", "text": "...", "type": "single"|"multiple"|"text", "options": ["...", "..."] }
+Return ONLY valid JSON in this exact format:
+{"questions": [{"id": "q1", "text": "...", "type": "single"|"multiple"|"text", "options": ["...", "..."]}]}
+
+Rules:
 - For "single": 4-6 specific options relevant to THIS prompt
 - For "multiple": 4-6 options
-- For "text": no options (open answer)
+- For "text": no options field
 - Maximum 8 questions
-- Questions must feel personal and smart, not boilerplate
-- Respond in language: ${language}`
+- Questions must feel personal and smart, not boilerplate`
 
-  const result = await model.generateContent([systemPrompt, `\n\nUser's prompt:\n"${userPrompt}"`])
-  const raw = result.response.text().trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
+  const raw = await groq(apiKey, systemPrompt, `User's prompt:\n"${userPrompt}"`)
   try {
-    return JSON.parse(raw) as Question[]
+    const parsed = JSON.parse(raw) as { questions: Question[] }
+    return parsed.questions ?? []
   } catch {
-    throw new Error('Gemini returned invalid JSON for questions.')
+    throw new Error('Invalid response from Groq for questions.')
   }
 }
 
@@ -67,8 +94,6 @@ export async function enhancePrompt(
   answers: Record<string, string | string[]>,
   language: string
 ): Promise<EnhanceResult> {
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
   const prefsCtx = await buildPrefsContext(language)
 
   const qaBlock = questions
@@ -83,23 +108,20 @@ export async function enhancePrompt(
 Given the user's original prompt and their clarifying answers, produce an improved prompt.
 ${prefsCtx}
 
-Output ONLY valid JSON (no markdown):
+Return ONLY valid JSON:
 {
   "enhancedPrompt": "...",
   "explanation": "2-3 sentence explanation of what you improved",
   "topicCategory": "e.g. Web Development, Copywriting, Data Analysis",
-  "originalScore": <integer 1-10 rating of original prompt quality>,
-  "enhancedScore": <integer 1-10 rating of enhanced prompt quality>
-}
+  "originalScore": <integer 1-10>,
+  "enhancedScore": <integer 1-10>
+}`
 
-Respond in language: ${language}`
-
-  const result = await model.generateContent([systemPrompt, `\n\nOriginal prompt:\n"${originalPrompt}"\n\nClarifying answers:\n${qaBlock}`])
-  const raw = result.response.text().trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
+  const raw = await groq(apiKey, systemPrompt, `Original prompt:\n"${originalPrompt}"\n\nClarifying answers:\n${qaBlock}`)
   try {
     return JSON.parse(raw) as EnhanceResult
   } catch {
-    throw new Error('Gemini returned invalid JSON for enhancement.')
+    throw new Error('Invalid response from Groq for enhancement.')
   }
 }
 
@@ -109,21 +131,16 @@ export async function extractPreferenceTags(
   answers: Record<string, string | string[]>,
   topicCategory: string
 ): Promise<Record<string, string[]>> {
-  const genAI = new GoogleGenerativeAI(apiKey)
-  const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' })
   const qaBlock = questions
     .filter((q) => answers[q.id] !== undefined)
     .map((q) => `${q.text}: ${Array.isArray(answers[q.id]) ? (answers[q.id] as string[]).join(', ') : answers[q.id]}`)
     .join('\n')
 
-  const prompt = `From this Q&A session (topic: ${topicCategory}), extract reusable user preferences as JSON.
+  const systemPrompt = `From this Q&A session (topic: ${topicCategory}), extract reusable user preferences as JSON.
 Keys = preference categories (e.g. "design_style", "tone", "complexity"), values = string arrays.
 Only extract genuine preferences useful in future sessions.
-Output ONLY valid JSON. If nothing worth saving, output {}.
+Return ONLY valid JSON like: {"tone": ["professional"], "style": ["minimal"]}. If nothing worth saving, return {}.`
 
-Q&A:\n${qaBlock}`
-
-  const result = await model.generateContent(prompt)
-  const raw = result.response.text().trim().replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
+  const raw = await groq(apiKey, systemPrompt, `Q&A:\n${qaBlock}`)
   try { return JSON.parse(raw) as Record<string, string[]> } catch { return {} }
 }
