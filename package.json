@@ -23,7 +23,8 @@
   "dependencies": {
     "@electron-toolkit/tsconfig": "^2.0.0",
     "@electron-toolkit/utils": "^4.0.0",
-    "@google/generative-ai": "^0.21.0"
+    "@google/generative-ai": "^0.21.0",
+    "@supabase/supabase-js": "^2.103.3"
   },
   "devDependencies": {
     "@types/react": "18.3.28",

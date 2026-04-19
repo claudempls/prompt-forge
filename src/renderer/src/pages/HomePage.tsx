@@ -1,7 +1,10 @@
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import type { AppState } from '../App'
+import type { Category } from '../lib/gemini'
 import { generateQuestions } from '../lib/gemini'
+import { useT, detectLanguage } from '../lib/i18n'
+import { setLanguage } from '../lib/store'
 
 interface Props {
   state: AppState
@@ -16,17 +19,50 @@ const EXAMPLES = [
 ]
 
 export default function HomePage({ state, update }: Props) {
+  const t = useT(state.language)
   const [prompt, setPrompt] = useState(state.originalPrompt)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [detectedLang, setDetectedLang] = useState<string | null>(null)
+  const detectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const selectedCategory = state.category ?? 'auto'
+
+  // Auto-detect language as user types
+  useEffect(() => {
+    if (detectTimer.current) clearTimeout(detectTimer.current)
+    detectTimer.current = setTimeout(() => {
+      const lang = detectLanguage(prompt)
+      if (lang && lang !== state.language) {
+        setDetectedLang(lang)
+        update({ language: lang })
+        setLanguage(lang)
+        window.electron.store.set('language', lang)
+      } else if (!lang) {
+        setDetectedLang(null)
+      }
+    }, 600)
+    return () => { if (detectTimer.current) clearTimeout(detectTimer.current) }
+  }, [prompt])
+
+  const CATEGORIES: { id: Category; label: string; icon: string }[] = [
+    { id: 'auto',    label: t.catAuto,    icon: '✦' },
+    { id: 'code',    label: t.catCode,    icon: '{ }' },
+    { id: 'mail',    label: t.catMail,    icon: '✉' },
+    { id: 'content', label: t.catContent, icon: '✍' },
+    { id: 'data',    label: t.catData,    icon: '◫' },
+    { id: 'image',   label: t.catImage,   icon: '⬡' },
+    { id: 'seo',     label: t.catSeo,     icon: '↑' },
+    { id: 'chat',    label: t.catChat,    icon: '◎' },
+  ]
 
   async function handleStart() {
     const trimmed = prompt.trim()
-    if (!trimmed) { setError('Write something first.'); return }
+    if (!trimmed) { setError(t.homeWriteFirst); return }
     setError('')
     setLoading(true)
     try {
-      const questions = await generateQuestions(state.apiKey, trimmed, state.language)
+      const questions = await generateQuestions(state.apiKey, trimmed, state.language, selectedCategory)
       update({ forgeScreen: 'questions', originalPrompt: trimmed, questions, answers: {} })
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.')
@@ -46,14 +82,32 @@ export default function HomePage({ state, update }: Props) {
       </div>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-8">
+      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6">
         <div className="flex flex-col items-center gap-2 text-center">
           <h2 className="font-display text-5xl font-semibold text-forge-text tracking-tight leading-tight">
-            Improve your prompt
+            {t.homeTitle}
           </h2>
           <p className="text-forge-muted text-sm max-w-sm leading-relaxed">
-            Paste any rough idea — PromptForge asks a few smart questions and transforms it into something precise.
+            {t.homeSubtitle}
           </p>
+        </div>
+
+        {/* Category selector */}
+        <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-lg">
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => update({ category: cat.id })}
+              className={`no-drag flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+                selectedCategory === cat.id
+                  ? 'bg-forge-accent/15 border-forge-accent/50 text-forge-accent'
+                  : 'bg-forge-surface border-forge-border text-forge-muted hover:text-forge-text hover:border-forge-border-hi'
+              }`}
+            >
+              <span className="text-[11px]">{cat.icon}</span>
+              {cat.label}
+            </button>
+          ))}
         </div>
 
         {/* Input card */}
@@ -61,32 +115,39 @@ export default function HomePage({ state, update }: Props) {
           <textarea
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
-            placeholder="Describe what you want to build, write, or create…"
+            placeholder={t.homePlaceholder}
             className="no-drag w-full bg-transparent text-forge-text text-sm px-4 pt-4 pb-2 placeholder:text-forge-muted focus:outline-none min-h-[100px] leading-relaxed"
             onKeyDown={(e) => {
               if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleStart()
             }}
           />
           <div className="flex items-center justify-between px-3 pb-3 pt-1">
-            <span className="text-xs text-forge-muted/70">
-              {prompt.length > 0 ? `${prompt.length} chars` : '⌘+Enter to improve'}
+            <span className="text-xs text-forge-muted/70 flex items-center gap-1.5">
+              {detectedLang ? (
+                <>
+                  <span className="w-1.5 h-1.5 rounded-full bg-forge-accent/70 animate-pulse" />
+                  <span className="text-forge-accent/70">{detectedLang}</span>
+                </>
+              ) : (
+                prompt.length > 0 ? `${prompt.length} chars` : t.homeShortcut
+              )}
             </span>
             <button
               onClick={handleStart}
               disabled={loading}
-              className="no-drag flex items-center gap-2 px-4 py-1.5 bg-forge-accent hover:bg-forge-accent-soft disabled:opacity-50 text-white text-sm font-medium rounded-xl transition-all"
+              className="no-drag flex items-center gap-2 px-5 py-2 bg-forge-accent hover:bg-forge-accent-soft disabled:opacity-50 text-white text-sm font-semibold rounded-xl transition-all shadow-md shadow-forge-accent/20"
             >
               {loading ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  Analyzing…
+                  {t.homeAnalyzing}
                 </>
               ) : (
                 <>
                   <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
                     <path d="M2 6.5h9M8 3l3 3.5-3 3.5" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
-                  Improve
+                  {t.homeImprove}
                 </>
               )}
             </button>
@@ -102,13 +163,13 @@ export default function HomePage({ state, update }: Props) {
         {/* Example chips */}
         {!loading && (
           <div className="flex flex-col items-center gap-2">
-            <p className="text-xs text-forge-muted/60">Try an example</p>
+            <p className="text-xs text-forge-muted/60">{t.homeTryExample}</p>
             <div className="flex flex-wrap gap-1.5 justify-center max-w-lg">
               {EXAMPLES.map((ex) => (
                 <button
                   key={ex}
                   onClick={() => setPrompt(ex)}
-                  className="text-xs px-3 py-1.5 bg-forge-surface border border-forge-border rounded-full text-forge-muted hover:text-forge-text hover:border-forge-border-hi transition-all"
+                  className="text-xs px-3.5 py-2 bg-forge-surface border border-forge-border rounded-full text-forge-muted hover:text-forge-text hover:border-forge-accent/30 hover:bg-forge-accent/5 transition-all"
                 >
                   {ex}
                 </button>
