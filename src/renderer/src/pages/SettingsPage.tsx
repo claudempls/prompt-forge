@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { AppState } from '../App'
 import { setLanguage, getDailyUsage, FREE_DAILY_LIMIT } from '../lib/store'
 import { useT } from '../lib/i18n'
+import { supabase } from '../lib/supabase'
 
 const LANGUAGES = ['English', 'Čeština', '中文', 'Español', 'Deutsch', 'Français', 'Italiano', 'Português', 'Polski', '日本語']
 
@@ -149,6 +150,10 @@ export default function SettingsPage({ state, update, onLogout }: Props) {
     onLogout()
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut()
+  }
+
   return (
     <div className="flex flex-col h-full relative">
       {showPro && <ProModal onClose={() => setShowPro(false)} t={t} />}
@@ -260,17 +265,32 @@ export default function SettingsPage({ state, update, onLogout }: Props) {
         </button>
 
         {/* Danger zone */}
-        <section className="border border-red-500/15 rounded-2xl p-4 flex items-center justify-between">
-          <div>
-            <p className="text-sm text-forge-text">{t.sResetApp}</p>
-            <p className="text-xs text-forge-muted mt-0.5">{t.sResetAppDesc}</p>
+        <section className="border border-red-500/15 rounded-2xl p-4 flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-forge-text">{t.sLogout}</p>
+              <p className="text-xs text-forge-muted mt-0.5">{t.sLogoutDesc}</p>
+            </div>
+            <button
+              onClick={handleSignOut}
+              className="text-xs text-red-400/70 hover:text-red-400 px-3 py-1.5 rounded-xl border border-red-500/20 hover:bg-red-500/8 transition-all"
+            >
+              {t.sLogout}
+            </button>
           </div>
-          <button
-            onClick={handleLogout}
-            className="text-xs text-red-400/70 hover:text-red-400 px-3 py-1.5 rounded-xl border border-red-500/20 hover:bg-red-500/8 transition-all"
-          >
-            {t.sReset}
-          </button>
+          <div className="border-t border-red-500/10" />
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm text-forge-text">{t.sResetApp}</p>
+              <p className="text-xs text-forge-muted mt-0.5">{t.sResetAppDesc}</p>
+            </div>
+            <button
+              onClick={handleLogout}
+              className="text-xs text-red-400/70 hover:text-red-400 px-3 py-1.5 rounded-xl border border-red-500/20 hover:bg-red-500/8 transition-all"
+            >
+              {t.sReset}
+            </button>
+          </div>
         </section>
 
       </div>
