@@ -18,7 +18,7 @@ export default function QuestionsPage({ state, update }: Props) {
   const [error, setError] = useState('')
 
   const t = useT(state.language)
-  const { questions, originalPrompt, apiKey, language, category } = state
+  const { questions, originalPrompt, apiKey, language, category, mode } = state
   const current = questions[currentIndex]
   const isLast = currentIndex === questions.length - 1
   const answer = answers[current?.id]
@@ -84,7 +84,7 @@ export default function QuestionsPage({ state, update }: Props) {
     setError('')
     setLoading(true)
     try {
-      const result = await enhancePrompt(apiKey, originalPrompt, questions, answers, language, category)
+      const result = await enhancePrompt(apiKey, originalPrompt, questions, answers, language, category, mode)
       savePreferencesAsync(result)
       update({ forgeScreen: 'result', answers, result })
     } catch (e) {

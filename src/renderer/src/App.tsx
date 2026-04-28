@@ -10,7 +10,7 @@ import SettingsPage from './pages/SettingsPage'
 import Sidebar from './components/Sidebar'
 import { isSetupDone, getLanguage, getApiKey } from './lib/store'
 import { supabase } from './lib/supabase'
-import type { Question, EnhanceResult, Category } from './lib/gemini'
+import type { Question, EnhanceResult, Category, Mode } from './lib/gemini'
 
 export type NavTab = 'forge' | 'history' | 'personalization' | 'settings'
 export type ForgeScreen = 'home' | 'questions' | 'result'
@@ -20,6 +20,7 @@ export interface AppState {
   language: string
   provider: string
   category: Category
+  mode: Mode
   originalPrompt: string
   questions: Question[]
   answers: Record<string, string | string[]>
@@ -36,6 +37,7 @@ export default function App() {
     language: 'English',
     provider: 'groq',
     category: 'auto',
+    mode: 'standard',
     originalPrompt: '',
     questions: [],
     answers: {},

@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { AppState } from '../App'
-import type { Category } from '../lib/gemini'
-import { generateQuestions } from '../lib/gemini'
+import type { Category, Mode } from '../lib/gemini'
+import { generateQuestions, enhancePrompt } from '../lib/gemini'
 import { useT, detectLanguage } from '../lib/i18n'
 import { setLanguage } from '../lib/store'
 
@@ -27,6 +27,7 @@ export default function HomePage({ state, update }: Props) {
   const detectTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const selectedCategory = state.category ?? 'auto'
+  const selectedMode = state.mode ?? 'standard'
 
   // Auto-detect language as user types
   useEffect(() => {
@@ -56,14 +57,27 @@ export default function HomePage({ state, update }: Props) {
     { id: 'chat',    label: t.catChat,    icon: '◎' },
   ]
 
+  const MODES: { id: Mode; label: string; desc: string }[] = [
+    { id: 'lite',     label: 'Lite',     desc: 'Instant enhance, no questions' },
+    { id: 'standard', label: 'Standard', desc: '3–5 targeted questions' },
+    { id: 'expert',   label: 'Expert',   desc: '6–8 deep questions' },
+  ]
+
   async function handleStart() {
     const trimmed = prompt.trim()
     if (!trimmed) { setError(t.homeWriteFirst); return }
     setError('')
     setLoading(true)
     try {
-      const questions = await generateQuestions(state.apiKey, trimmed, state.language, selectedCategory)
-      update({ forgeScreen: 'questions', originalPrompt: trimmed, questions, answers: {} })
+      const questions = await generateQuestions(state.apiKey, trimmed, state.language, selectedCategory, selectedMode)
+
+      if (questions.length === 0) {
+        // Lite mode or prompt needs no clarification — enhance directly
+        const result = await enhancePrompt(state.apiKey, trimmed, [], {}, state.language, selectedCategory, selectedMode)
+        update({ forgeScreen: 'result', originalPrompt: trimmed, questions: [], answers: {}, result })
+      } else {
+        update({ forgeScreen: 'questions', originalPrompt: trimmed, questions, answers: {} })
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Something went wrong.')
     } finally {
@@ -82,7 +96,7 @@ export default function HomePage({ state, update }: Props) {
       </div>
 
       {/* Main */}
-      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-6">
+      <div className="flex-1 flex flex-col items-center justify-center px-8 gap-5">
         <div className="flex flex-col items-center gap-2 text-center">
           <h2 className="font-display text-5xl font-semibold text-forge-text tracking-tight leading-tight">
             {t.homeTitle}
@@ -93,21 +107,57 @@ export default function HomePage({ state, update }: Props) {
         </div>
 
         {/* Category selector */}
-        <div className="flex flex-wrap items-center justify-center gap-1.5 max-w-lg">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => update({ category: cat.id })}
-              className={`no-drag flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
-                selectedCategory === cat.id
-                  ? 'bg-forge-accent/15 border-forge-accent/50 text-forge-accent'
-                  : 'bg-forge-surface border-forge-border text-forge-muted hover:text-forge-text hover:border-forge-border-hi'
-              }`}
-            >
-              <span className="text-[11px]">{cat.icon}</span>
-              {cat.label}
-            </button>
-          ))}
+        <div className="w-full max-w-lg flex flex-col gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-1.5">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => update({ category: cat.id })}
+                className={`no-drag flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+                  selectedCategory === cat.id
+                    ? 'bg-forge-accent/15 border-forge-accent/50 text-forge-accent'
+                    : 'bg-forge-surface border-forge-border text-forge-muted hover:text-forge-text hover:border-forge-border-hi'
+                }`}
+              >
+                <span className="text-[11px]">{cat.icon}</span>
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Mode selector */}
+          <div className="flex items-center justify-center gap-1.5">
+            {MODES.map((m) => (
+              <button
+                key={m.id}
+                onClick={() => update({ mode: m.id })}
+                title={m.desc}
+                className={`no-drag flex items-center gap-1.5 px-4 py-1.5 rounded-xl text-xs font-medium transition-all border ${
+                  selectedMode === m.id
+                    ? 'bg-forge-accent/15 border-forge-accent/50 text-forge-accent'
+                    : 'bg-forge-surface border-forge-border text-forge-muted hover:text-forge-text hover:border-forge-border-hi'
+                }`}
+              >
+                {m.id === 'lite' && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M5 1v2M5 7v2M1 5h2M7 5h2M2.5 2.5l1.5 1.5M6 6l1.5 1.5M2.5 7.5L4 6M6 4l1.5-1.5" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                )}
+                {m.id === 'standard' && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <circle cx="5" cy="5" r="3.5" stroke="currentColor" strokeWidth="1.2"/>
+                    <path d="M5 3v2.5l1.5 1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                )}
+                {m.id === 'expert' && (
+                  <svg width="10" height="10" viewBox="0 0 10 10" fill="none">
+                    <path d="M5 1.5l1 2.5 2.5.5-1.8 1.8.5 2.7L5 7.8 2.8 9l.5-2.7L1.5 4.5 4 4z" stroke="currentColor" strokeWidth="1.1" strokeLinejoin="round"/>
+                  </svg>
+                )}
+                {m.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Input card */}
