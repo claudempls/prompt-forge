@@ -3,6 +3,7 @@ import { join } from 'path'
 import { exec } from 'child_process'
 import { is } from '@electron-toolkit/utils'
 import fs from 'fs'
+import http from 'http'
 
 const userDataPath = app.getPath('userData')
 const storePath = join(userDataPath, 'store.json')
@@ -235,4 +236,72 @@ ipcMain.handle('quick:close', () => {
   }
   quickWindow?.hide()
   quickWindow?.webContents.send('quick:reset')
+})
+
+// ---- IPC: Google OAuth (system browser + localhost callback) ----
+ipcMain.handle('auth:google', () => {
+  return new Promise((resolve, reject) => {
+    const PORT = 54321
+    const SUPABASE_URL = 'https://yrjgatenreointxowngz.supabase.co'
+
+    // HTML page served at localhost:54321 — reads the hash fragment and
+    // forwards tokens as query params to /callback (servers can't see hashes)
+    const bridgePage = `<!DOCTYPE html><html><head><title>Signing in…</title></head><body>
+      <p>Signing in, please wait…</p>
+      <script>
+        const hash = window.location.hash.slice(1)
+        if (hash) {
+          window.location.href = '/callback?' + hash
+        }
+      </script>
+    </body></html>`
+
+    const server = http.createServer((req, res) => {
+      const reqUrl = new URL(req.url ?? '/', `http://localhost:${PORT}`)
+
+      if (reqUrl.pathname === '/callback') {
+        const access_token = reqUrl.searchParams.get('access_token')
+        const refresh_token = reqUrl.searchParams.get('refresh_token')
+
+        res.writeHead(200, { 'Content-Type': 'text/html' })
+        res.end('<!DOCTYPE html><html><body><h2>Login successful!</h2><p>You can close this tab and return to PromptForge.</p></body></html>')
+
+        server.close()
+        mainWindow?.focus()
+
+        if (access_token && refresh_token) {
+          resolve({ access_token, refresh_token })
+        } else {
+          reject(new Error('No tokens in callback'))
+        }
+      } else {
+        // Serve bridge page that reads the hash and redirects to /callback
+        res.writeHead(200, { 'Content-Type': 'text/html' })
+        res.end(bridgePage)
+      }
+    })
+
+    server.listen(PORT, () => {
+      const oauthUrl =
+        `${SUPABASE_URL}/auth/v1/authorize?provider=google` +
+        `&redirect_to=http://localhost:${PORT}`
+      void shell.openExternal(oauthUrl)
+    })
+
+    server.on('error', (err: NodeJS.ErrnoException) => {
+      if (err.code === 'EADDRINUSE') {
+        // Kill whatever is on the port and retry
+        exec(`lsof -ti:${PORT} | xargs kill -9`, () => {
+          server.listen(PORT, () => {
+            const oauthUrl =
+              `${SUPABASE_URL}/auth/v1/authorize?provider=google` +
+              `&redirect_to=http://localhost:${PORT}`
+            void shell.openExternal(oauthUrl)
+          })
+        })
+      } else {
+        reject(err)
+      }
+    })
+  })
 })

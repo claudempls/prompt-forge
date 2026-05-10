@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import SetupPage from './pages/SetupPage'
+import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import QuestionsPage from './pages/QuestionsPage'
 import ResultPage from './pages/ResultPage'
@@ -8,7 +9,8 @@ import PersonalizationPage from './pages/PersonalizationPage'
 import SettingsPage from './pages/SettingsPage'
 import Sidebar from './components/Sidebar'
 import { isSetupDone, getLanguage, getApiKey } from './lib/store'
-import type { Question, EnhanceResult } from './lib/gemini'
+import { supabase } from './lib/supabase'
+import type { Question, EnhanceResult, Category, Mode } from './lib/gemini'
 
 export type NavTab = 'forge' | 'history' | 'personalization' | 'settings'
 export type ForgeScreen = 'home' | 'questions' | 'result'
@@ -17,6 +19,8 @@ export interface AppState {
   apiKey: string
   language: string
   provider: string
+  category: Category
+  mode: Mode
   originalPrompt: string
   questions: Question[]
   answers: Record<string, string | string[]>
@@ -26,11 +30,14 @@ export interface AppState {
 
 export default function App() {
   const [tab, setTab] = useState<NavTab>('forge')
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null)
   const [setup, setSetup] = useState<boolean | null>(null)
   const [state, setState] = useState<AppState>({
     apiKey: '',
     language: 'English',
     provider: 'groq',
+    category: 'auto',
+    mode: 'standard',
     originalPrompt: '',
     questions: [],
     answers: {},
@@ -40,6 +47,12 @@ export default function App() {
 
   useEffect(() => {
     async function init() {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        setLoggedIn(false)
+        return
+      }
+      setLoggedIn(true)
       const done = await isSetupDone()
       const lang = await getLanguage()
       const key = await getApiKey()
@@ -48,11 +61,45 @@ export default function App() {
       setSetup(done)
     }
     init()
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (!session) {
+        setLoggedIn(false)
+        setSetup(null)
+      }
+    })
+    return () => subscription.unsubscribe()
   }, [])
 
   const update = (patch: Partial<AppState>) => setState((s) => ({ ...s, ...patch }))
 
-  // Still loading
+  // Still loading auth state
+  if (loggedIn === null) {
+    return (
+      <div className="app-content flex items-center justify-center h-full">
+        <div className="w-5 h-5 rounded-full border-2 border-forge-accent border-t-transparent animate-spin" />
+      </div>
+    )
+  }
+
+  // Not logged in
+  if (!loggedIn) {
+    return (
+      <div className="app-content h-full">
+        <LoginPage onLoggedIn={async () => {
+          setLoggedIn(true)
+          const done = await isSetupDone()
+          const lang = await getLanguage()
+          const key = await getApiKey()
+          const provider = (await window.electron.store.get('provider') as string) ?? 'groq'
+          setState((s) => ({ ...s, language: lang, apiKey: key ?? '', provider }))
+          setSetup(done)
+        }} />
+      </div>
+    )
+  }
+
+  // Still loading local preferences
   if (setup === null) {
     return (
       <div className="app-content flex items-center justify-center h-full">
