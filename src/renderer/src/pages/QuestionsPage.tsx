@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { AppState } from '../App'
+import type { Question } from '../lib/gemini'
 import { enhancePrompt, extractPreferenceTags } from '../lib/gemini'
 import { getPreferences, setLanguage, store } from '../lib/store'
 import type { UserPreferences } from '../lib/store'
-import { useT } from '../lib/i18n'
 
 interface Props {
   state: AppState
@@ -17,11 +17,11 @@ export default function QuestionsPage({ state, update }: Props) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const t = useT(state.language)
-  const { questions, originalPrompt, apiKey, language, category, mode } = state
+  const { questions, originalPrompt, apiKey, language } = state
   const current = questions[currentIndex]
   const isLast = currentIndex === questions.length - 1
   const answer = answers[current?.id]
+  const isAnswered = answer !== undefined && (Array.isArray(answer) ? answer.length > 0 : answer.trim().length > 0)
 
   function toggleSingle(qId: string, option: string) {
     setAnswers((a) => ({ ...a, [qId]: option }))
@@ -84,7 +84,7 @@ export default function QuestionsPage({ state, update }: Props) {
     setError('')
     setLoading(true)
     try {
-      const result = await enhancePrompt(apiKey, originalPrompt, questions, answers, language, category, mode)
+      const result = await enhancePrompt(apiKey, originalPrompt, questions, answers, language)
       savePreferencesAsync(result)
       update({ forgeScreen: 'result', answers, result })
     } catch (e) {
@@ -139,7 +139,7 @@ export default function QuestionsPage({ state, update }: Props) {
           <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
             <path d="M8 2L4 6l4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
           </svg>
-          {t.qBack}
+          Back
         </button>
         <div className="flex-1 flex justify-center">
           <span className="text-xs text-forge-muted">{currentIndex + 1} / {questions.length}</span>
@@ -158,15 +158,15 @@ export default function QuestionsPage({ state, update }: Props) {
           {/* Question text */}
           <div className="flex flex-col gap-1">
             <p className="text-xs text-forge-muted/60 uppercase tracking-widest">
-              {t.qQuestion} {currentIndex + 1}
+              Question {currentIndex + 1}
             </p>
             <h2 className="font-display text-2xl font-semibold text-forge-text leading-snug">
               {current.text}
             </h2>
             <p className="text-xs text-forge-muted/70">
-              {current.type === 'single' && t.qChooseOne + (current.options?.length ?? 0)}
-              {current.type === 'multiple' && t.qChooseMany + (current.options?.length ?? 0)}
-              {current.type === 'text' && t.qTypeAnswer}
+              {current.type === 'single' && 'Choose one · press 1–' + (current.options?.length ?? 0)}
+              {current.type === 'multiple' && 'Choose all that apply · press 1–' + (current.options?.length ?? 0)}
+              {current.type === 'text' && 'Type your answer'}
             </p>
           </div>
 
@@ -177,37 +177,27 @@ export default function QuestionsPage({ state, update }: Props) {
                 const selected = current.type === 'single'
                   ? answer === opt
                   : Array.isArray(answer) && answer.includes(opt)
-                const isSingle = current.type === 'single'
                 return (
                   <button
                     key={opt}
-                    onClick={() => isSingle ? toggleSingle(current.id, opt) : toggleMultiple(current.id, opt)}
+                    onClick={() => current.type === 'single' ? toggleSingle(current.id, opt) : toggleMultiple(current.id, opt)}
                     className={`text-left px-4 py-3 rounded-2xl border transition-all flex items-center gap-3 ${
                       selected
                         ? 'border-forge-accent/60 bg-forge-accent/10 text-forge-text'
                         : 'border-forge-border bg-forge-surface text-forge-muted hover:border-forge-border-hi hover:text-forge-text'
                     }`}
                   >
-                    {/* Radio (single) vs Checkbox (multiple) indicator */}
-                    {isSingle ? (
-                      <span className={`w-5 h-5 flex-shrink-0 rounded-full border-2 flex items-center justify-center transition-all ${
-                        selected ? 'border-forge-accent bg-forge-accent' : 'border-forge-muted/40'
-                      }`}>
-                        {selected && <span className="w-2 h-2 rounded-full bg-white" />}
-                      </span>
-                    ) : (
-                      <span className={`w-5 h-5 flex-shrink-0 rounded-md border-2 flex items-center justify-center transition-all ${
-                        selected ? 'border-forge-accent bg-forge-accent' : 'border-forge-muted/40'
-                      }`}>
-                        {selected && (
-                          <svg width="11" height="11" viewBox="0 0 11 11" fill="none">
-                            <path d="M2 5.5l2.5 2.5 4.5-4.5" stroke="white" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                        )}
-                      </span>
-                    )}
-                    <span className="text-xs text-forge-muted/50 font-mono w-3 flex-shrink-0">{i + 1}</span>
+                    <span className={`w-5 h-5 flex-shrink-0 flex items-center justify-center text-xs font-semibold rounded-md border transition-all ${
+                      selected ? 'bg-forge-accent border-forge-accent text-white' : 'border-forge-muted/40 text-forge-muted/60'
+                    }`}>
+                      {i + 1}
+                    </span>
                     <span className="text-sm">{opt}</span>
+                    {selected && current.type === 'single' && (
+                      <svg className="ml-auto flex-shrink-0" width="14" height="14" viewBox="0 0 14 14" fill="none">
+                        <path d="M3 7l3 3 5-5" stroke="#c97d3a" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    )}
                   </button>
                 )
               })}
@@ -219,7 +209,7 @@ export default function QuestionsPage({ state, update }: Props) {
             <textarea
               value={textInputs[current.id] ?? ''}
               onChange={(e) => setTextAnswer(current.id, e.target.value)}
-              placeholder={`${t.qTypeAnswer}…`}
+              placeholder="Type your answer…"
               autoFocus
               className="no-drag w-full bg-forge-surface border border-forge-border rounded-2xl px-4 py-3 text-sm text-forge-text placeholder:text-forge-muted/60 focus:outline-none focus:border-forge-accent/50 min-h-[90px] resize-none"
             />
@@ -236,29 +226,29 @@ export default function QuestionsPage({ state, update }: Props) {
               disabled={loading}
               className="text-xs text-forge-muted/50 hover:text-forge-muted transition-colors"
             >
-              {t.qSkip}
+              Skip
             </button>
 
             <button
               onClick={goNext}
               disabled={loading}
-              className={`no-drag flex items-center gap-2 px-5 py-2.5 bg-forge-accent hover:bg-forge-accent-soft disabled:opacity-40 text-white text-sm font-semibold rounded-xl transition-all ${isLast ? 'shadow-glow-accent scale-[1.02]' : 'shadow-md shadow-forge-accent/25'}`}
+              className="no-drag flex items-center gap-2 px-5 py-2.5 bg-forge-accent hover:bg-forge-accent-soft disabled:opacity-40 text-white text-sm font-medium rounded-xl transition-all"
             >
               {loading ? (
                 <>
                   <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  {t.qForging}
+                  Forging…
                 </>
               ) : isLast ? (
                 <>
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M7 2l1.5 3 3.5.5-2.5 2.5.5 3.5L7 10 3.5 11.5l.5-3.5L1.5 5.5 5 5z" stroke="white" strokeWidth="1.2" strokeLinejoin="round"/>
                   </svg>
-                  {t.qForge}
+                  Forge my prompt
                 </>
               ) : (
                 <>
-                  {t.qNext}
+                  Next
                   <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
                     <path d="M4 2l4 4-4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>

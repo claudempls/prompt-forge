@@ -2,9 +2,6 @@
 
 interface Window {
   electron: {
-    auth: {
-      google: () => Promise<{ access_token: string; refresh_token: string }>
-    }
     store: {
       get:  (key: string)                  => Promise<unknown>
       set:  (key: string, value: unknown)  => Promise<void>
