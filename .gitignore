@@ -5,3 +5,7 @@ dist/
 dist-electron/
 *.log
 .DS_Store
+.next/
+.env.local
+.env*.local
+.vercel
