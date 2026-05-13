@@ -16,6 +16,7 @@ const MODE_META = {
   lite:     { label: 'Lite',     hint: 'Zero questions — instant polish',           color: '#6dbf7f' },
   standard: { label: 'Standard', hint: '3–5 questions, guided refinement',          color: '#c97d3a' },
   expert:   { label: 'Expert',   hint: '6–10 questions, production-grade prompt',   color: '#a78bfa' },
+  compact:  { label: 'Compact',  hint: 'Lowest tokens — dense Chinese + symbols',   color: '#5fb3d4' },
   auto:     { label: null,       hint: null,                                         color: null     },
 }
 
@@ -23,11 +24,12 @@ function detectMode(text) {
   if (/^\/lite\b/i.test(text))     return 'lite'
   if (/^\/standard\b/i.test(text)) return 'standard'
   if (/^\/expert\b/i.test(text))   return 'expert'
+  if (/^\/compact\b/i.test(text))  return 'compact'
   return 'auto'
 }
 
 function stripModePrefix(text) {
-  return text.replace(/^\/(lite|standard|expert)\s*/i, '').trim()
+  return text.replace(/^\/(lite|standard|expert|compact)\s*/i, '').trim()
 }
 
 const EXAMPLES = [
@@ -105,13 +107,13 @@ export default function AppPage() {
     const cleanPrompt = stripModePrefix(roughPrompt)
     setError(null)
 
-    if (mode === 'lite') {
+    if (mode === 'lite' || mode === 'compact') {
       setStep(STEPS.LOADING_R)
       try {
         const res = await fetch('/api/refine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt: cleanPrompt, questions: [], answers: [], mode: 'lite' }),
+          body: JSON.stringify({ prompt: cleanPrompt, questions: [], answers: [], mode }),
         })
         const data = await res.json()
         if (res.status === 401) { router.push('/login?next=/app'); return }
@@ -316,6 +318,7 @@ export default function AppPage() {
                 { id: 'lite',     label: 'Lite',     hint: 'Instant polish, zero questions' },
                 { id: 'standard', label: 'Standard', hint: '3–5 questions, guided' },
                 { id: 'expert',   label: 'Expert',   hint: '6–10 questions, production-grade' },
+                { id: 'compact',  label: 'Compact',  hint: 'Lowest tokens, dense output' },
               ].map(({ id, label, hint }) => {
                 const prefixMode = detectMode(roughPrompt)
                 const active = prefixMode !== 'auto' ? prefixMode === id : selectedMode === id
