@@ -19,23 +19,21 @@ describe('Footer component', () => {
     expect(screen.getByText(/2026 PromptForge/)).toBeInTheDocument()
   })
 
-  it('renders Privacy and Terms as coming soon', () => {
+  it('renders Privacy and Terms links', () => {
     render(<Footer />)
-    expect(screen.getByText('Privacy')).toBeInTheDocument()
-    expect(screen.getByText('Terms')).toBeInTheDocument()
-    const soonTags = document.querySelectorAll('.footer-soon-tag')
-    expect(soonTags.length).toBe(2)
+    expect(screen.getByText('Privacy')).toHaveAttribute('href', '/privacy')
+    expect(screen.getByText('Terms')).toHaveAttribute('href', '/terms')
   })
 
   it('renders GitHub link pointing to the real repo', () => {
     render(<Footer />)
     const githubLink = screen.getByText('GitHub')
-    expect(githubLink).toHaveAttribute('href', 'https://github.com/matysekprogramuje/promptforge-web')
+    expect(githubLink).toHaveAttribute('href', 'https://github.com/claudempls/prompt-forge')
   })
 
   it('renders Contact as a mailto link', () => {
     render(<Footer />)
     const contactLink = screen.getByText('Contact')
-    expect(contactLink).toHaveAttribute('href', 'mailto:hello@promptforge.app')
+    expect(contactLink).toHaveAttribute('href', 'mailto:hello@promptforge.ai')
   })
 })

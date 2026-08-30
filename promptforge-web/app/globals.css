@@ -53,6 +53,17 @@ body::after {
 }
 
 .wrap { position: relative; z-index: 1; }
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
 
 /* ---- Nav ---- */
 nav {
@@ -288,7 +299,7 @@ nav {
 }
 .hero-actions {
   display: flex; gap: 10px; align-items: center; flex-wrap: wrap; justify-content: flex-start;
-  margin-bottom: 48px;
+  margin-bottom: 34px;
 }
 @media (max-width: 860px) {
   .hero-actions { justify-content: center; }
@@ -297,6 +308,64 @@ nav {
   padding: 11px 24px;
   font-size: 14px;
   border-radius: 12px;
+}
+.hero-waitlist {
+  width: 100%;
+  max-width: 520px;
+  margin-bottom: 14px;
+}
+.waitlist-form {
+  width: 100%;
+}
+.waitlist-row {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  padding: 6px;
+  border: 1px solid var(--border-hi);
+  border-radius: 15px;
+  background: rgba(255,255,255,0.04);
+  box-shadow: 0 24px 70px rgba(0,0,0,0.22);
+}
+.waitlist-input {
+  flex: 1;
+  min-width: 0;
+  height: 44px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text);
+  outline: none;
+  padding: 0 13px;
+  font-family: var(--font-inter), -apple-system, sans-serif;
+  font-size: 14px;
+}
+.waitlist-input::placeholder { color: var(--muted-2); }
+.waitlist-input:focus { border-color: rgba(201,125,58,0.48); }
+.waitlist-submit {
+  height: 44px;
+  justify-content: center;
+  min-width: 116px;
+}
+.waitlist-note {
+  margin-top: 9px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--muted);
+}
+.waitlist-note-success { color: var(--success); }
+.waitlist-note-error { color: var(--danger); }
+.waitlist-form-compact {
+  max-width: 520px;
+  margin: 28px auto 18px;
+}
+@media (max-width: 560px) {
+  .waitlist-row {
+    flex-direction: column;
+  }
+  .waitlist-submit {
+    width: 100%;
+  }
 }
 .hero-providers {
   display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: flex-start;
@@ -1614,6 +1683,63 @@ details[open] .faq-chevron { transform: rotate(180deg); }
   color: var(--muted);
   line-height: 1.7;
   background: var(--surface);
+}
+
+/* ---- Legal pages ---- */
+.legal-page {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  padding: 96px 24px 72px;
+}
+.legal-inner {
+  width: 100%;
+  max-width: 780px;
+  margin: 0 auto;
+}
+.legal-back {
+  display: inline-flex;
+  color: var(--muted);
+  text-decoration: none;
+  font-size: 13px;
+  margin-bottom: 40px;
+}
+.legal-back:hover { color: var(--text); }
+.legal-label { display: inline-flex; }
+.legal-title {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-size: clamp(44px, 8vw, 72px);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.02em;
+  margin-top: 14px;
+}
+.legal-updated {
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 16px;
+}
+.legal-list {
+  display: grid;
+  gap: 14px;
+  margin-top: 36px;
+}
+.legal-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 22px;
+}
+.legal-card h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+.legal-card p {
+  color: var(--muted);
+  font-size: 13.5px;
+  line-height: 1.75;
+  margin-top: 10px;
 }
 
 /* ---- Footer additions ---- */

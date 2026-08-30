@@ -11,18 +11,19 @@ jest.mock('next/link', () => {
 describe('Hero component', () => {
   it('renders the main headline', () => {
     render(<Hero />)
-    expect(screen.getByText('Your prompts,')).toBeInTheDocument()
-    expect(screen.getByText('finally precise.')).toBeInTheDocument()
+    expect(screen.getByText('Better prompts,')).toBeInTheDocument()
+    expect(screen.getByText('before you ask.')).toBeInTheDocument()
   })
 
-  it('renders the download button', () => {
+  it('renders the waitlist form', () => {
     render(<Hero />)
-    expect(screen.getByText('Download for Mac — Free')).toBeInTheDocument()
+    expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument()
+    expect(screen.getByText('Notify me')).toBeInTheDocument()
   })
 
   it('renders the "how it works" link', () => {
     render(<Hero />)
-    expect(screen.getByText('See how it works →')).toBeInTheDocument()
+    expect(screen.getByText('See how it works')).toBeInTheDocument()
   })
 
   it('renders all AI provider pills', () => {
@@ -35,33 +36,16 @@ describe('Hero component', () => {
 
   it('renders the eyebrow badge', () => {
     render(<Hero />)
-    expect(screen.getByText(/Powered by Gemini Flash/)).toBeInTheDocument()
+    expect(screen.getByText(/Free early access opens soon/)).toBeInTheDocument()
   })
 
   it('renders the product mockup window', () => {
     render(<Hero />)
-    expect(document.querySelector('.mockup-window')).toBeInTheDocument()
+    expect(document.querySelector('.hero-demo')).toBeInTheDocument()
   })
 
-  it('renders the mockup input text', () => {
+  it('renders all demo progress pips', () => {
     render(<Hero />)
-    expect(screen.getByText(/Write a cover letter for a senior developer role/)).toBeInTheDocument()
-  })
-
-  it('renders the mockup enhanced prompt output', () => {
-    render(<Hero />)
-    expect(screen.getByText('Enhanced prompt ready')).toBeInTheDocument()
-    expect(screen.getByText('9.2 / 10')).toBeInTheDocument()
-  })
-
-  it('renders the platform note with Windows coming soon', () => {
-    render(<Hero />)
-    expect(screen.getByText(/macOS 13/)).toBeInTheDocument()
-    expect(screen.getByText(/Windows.*Linux coming soon/)).toBeInTheDocument()
-  })
-
-  it('renders the progress indicator showing question 2 of 4', () => {
-    render(<Hero />)
-    expect(screen.getByText('Question 2 of 4')).toBeInTheDocument()
+    expect(document.querySelectorAll('.demo-pip').length).toBe(4)
   })
 })

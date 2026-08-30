@@ -33,14 +33,13 @@ describe('Nav component', () => {
     render(<Nav />)
     expect(screen.getByText('How it works')).toBeInTheDocument()
     expect(screen.getByText('Features')).toBeInTheDocument()
-    expect(screen.getByText('Quick Mode')).toBeInTheDocument()
-    expect(screen.getByText('Pricing')).toBeInTheDocument()
+    expect(screen.getByText('Forge')).toBeInTheDocument()
   })
 
-  it('shows Sign in and Download when no user is logged in', () => {
+  it('shows Sign in and Join waitlist when no user is logged in', () => {
     render(<Nav />)
     expect(screen.getByText('Sign in')).toBeInTheDocument()
-    expect(screen.getByText('Download')).toBeInTheDocument()
+    expect(screen.getByText('Join waitlist')).toBeInTheDocument()
   })
 
   it('logo links to home page', () => {

@@ -18,13 +18,13 @@ describe('Pricing component', () => {
   it('shows correct prices', () => {
     render(<Pricing />)
     expect(screen.getByText('$0')).toBeInTheDocument()
-    expect(screen.getByText('$20')).toBeInTheDocument()
+    expect(screen.getByText('$3')).toBeInTheDocument()
   })
 
   it('renders download and upgrade buttons', () => {
     render(<Pricing />)
     expect(screen.getByText('Download free')).toBeInTheDocument()
-    expect(screen.getByText('Get Pro — $20/mo')).toBeInTheDocument()
+    expect(screen.getByText('Get Pro — $3/mo')).toBeInTheDocument()
   })
 
   it('renders feature lists', () => {

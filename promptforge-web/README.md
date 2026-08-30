@@ -30,6 +30,19 @@ To get started +++++++makewith the PromptForge application:
    npm start
    ```
 
+## Waitlist emails
+
+Waitlist signups are stored in the Supabase `public.waitlist` table through `POST /api/waitlist`.
+
+To send a confirmation email after signup, configure Resend:
+
+```bash
+RESEND_API_KEY=re_your_resend_key
+WAITLIST_FROM_EMAIL="PromptForge <hello@promptforge.ai>"
+```
+
+If `RESEND_API_KEY` is missing, the signup is still saved and the API returns `email_sent: false`.
+
 ## Contributing
 We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details on how to get involved.
 

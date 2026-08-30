@@ -3,8 +3,8 @@ export default function HowItWorks() {
     <section id="how">
       <div className="section-inner">
         <div className="section-label">How it works</div>
-        <h2 className="section-title">Three steps to a <em>perfect prompt</em></h2>
-        <p className="section-sub">No prompt engineering knowledge required. Just describe what you want — PromptForge handles the rest.</p>
+        <h2 className="section-title">Three steps to a <em>stronger prompt</em></h2>
+        <p className="section-sub">No prompt engineering knowledge required. Just describe what you want, then let PromptForge make the missing context visible.</p>
 
         <div className="steps">
           <div className="step">
@@ -16,7 +16,7 @@ export default function HowItWorks() {
               </svg>
             </div>
             <h3>Write your rough idea</h3>
-            <p>Type any vague prompt — "make me a website", "write a cover letter", "analyze my data". Doesn't have to be good.</p>
+            <p>Type any vague prompt, like "make me a website", "write a cover letter", or "analyze my data". It does not have to be good.</p>
           </div>
 
           <div className="step">
@@ -28,7 +28,7 @@ export default function HowItWorks() {
               </svg>
             </div>
             <h3>Answer a few smart questions</h3>
-            <p>PromptForge asks only what it needs to know — specific, personal questions shown one at a time as beautiful choice cards.</p>
+            <p>PromptForge asks only what it needs to know through specific questions shown one at a time as simple choice cards.</p>
           </div>
 
           <div className="step">
@@ -39,7 +39,7 @@ export default function HowItWorks() {
               </svg>
             </div>
             <h3>Get a precise, powerful prompt</h3>
-            <p>Your prompt is transformed and ready to paste. PromptForge remembers your preferences and gets smarter with every session.</p>
+            <p>Your prompt is transformed and ready to paste. The launch version will focus on structure, constraints, missing context, and reusable workflows.</p>
           </div>
         </div>
       </div>

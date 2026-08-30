@@ -19,9 +19,30 @@ const inter = Inter({
 })
 
 export const metadata = {
-  title: 'PromptForge — Transform rough ideas into precise prompts',
+  metadataBase: new URL('https://promptforge.ai'),
+  title: 'PromptForge | Better prompts before you waste the next AI response',
   description:
-    'PromptForge asks smart questions about your prompt, learns your preferences, and transforms vague ideas into precise, powerful AI instructions.',
+    'PromptForge turns rough ideas into structured prompts, catches missing context, and gives you cleaner instructions for ChatGPT, Claude, Gemini, Groq, and local LLMs.',
+  openGraph: {
+    title: 'PromptForge',
+    description: 'Free early access for a prompt rewriting and scoring tool.',
+    url: 'https://promptforge.ai',
+    siteName: 'PromptForge',
+    images: [
+      {
+        url: '/promptforge-hero.png',
+        width: 1792,
+        height: 1024,
+        alt: 'PromptForge dashboard preview',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'PromptForge',
+    description: 'Better prompts before you waste the next AI response.',
+    images: ['/promptforge-hero.png'],
+  },
 }
 
 export default function RootLayout({ children }) {

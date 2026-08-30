@@ -2,28 +2,28 @@ import AnimateIn from '@/components/AnimateIn'
 
 const faqs = [
   {
+    q: 'What happens when I join the waitlist?',
+    a: 'You get one launch email when early access opens. The email will explain the demo, free tier limits, and roadmap.',
+  },
+  {
+    q: 'Is PromptForge free?',
+    a: 'The early-access version is being built around a free tier. Paid features may come later, but this launch page is only collecting interest for access.',
+  },
+  {
     q: 'Do I need an API key?',
-    a: 'Not on Pro — we include our own API. On the Free plan you bring your own Gemini, OpenAI, Anthropic, or Groq key. It takes 30 seconds to set up.',
+    a: 'Not for the waitlist or the public demo. Some advanced versions may support your own API key later, but it is not required to join.',
   },
   {
     q: 'Is my data stored anywhere?',
-    a: 'Prompt history is stored locally on your Mac. If you create an account, we optionally sync your learned preferences — but never the actual content of your prompts.',
+    a: 'The waitlist stores your email address. Do not submit passwords, API keys, private documents, or sensitive personal data into preview forms.',
   },
   {
-    q: 'What macOS version do I need?',
-    a: 'macOS 13 Ventura or later. Both Apple Silicon and Intel are supported. The app is notarized by Apple.',
-  },
-  {
-    q: 'Can I cancel Pro anytime?',
-    a: 'Yes, anytime — no questions asked. Your history and preferences remain accessible on the Free plan after you cancel.',
-  },
-  {
-    q: 'Is Windows or Linux support coming?',
-    a: 'Windows is next on our roadmap. Linux support is planned after that. Join the waitlist and we\'ll email you when it ships.',
+    q: 'Is this only for macOS?',
+    a: 'The desktop app is macOS-first, but the web demo and waitlist work in the browser. Platform support may expand after launch.',
   },
   {
     q: 'How is this different from just asking ChatGPT to improve my prompt?',
-    a: 'PromptForge asks targeted questions to understand your specific situation, learns your preferences over time, and works from any app via Quick Mode — reading your clipboard and pasting results back automatically. ChatGPT can\'t do any of that.',
+    a: 'The goal is to make prompt quality visible before you spend a model response. PromptForge focuses on missing context, constraints, structure, and reusable workflows.',
   },
 ]
 

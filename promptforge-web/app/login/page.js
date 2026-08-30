@@ -180,8 +180,8 @@ function LoginForm() {
 
           <p className="auth-terms">
             By signing in, you agree to our{' '}
-            <span className="auth-terms-link">Terms of Service</span> and{' '}
-            <span className="auth-terms-link">Privacy Policy</span>.
+            <Link href="/terms" className="auth-terms-link">Terms of Service</Link> and{' '}
+            <Link href="/privacy" className="auth-terms-link">Privacy Policy</Link>.
           </p>
         </div>
       </main>

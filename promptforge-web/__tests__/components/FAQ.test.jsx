@@ -17,27 +17,27 @@ describe('FAQ component', () => {
 
   it('renders all six FAQ questions', () => {
     render(<FAQ />)
+    expect(screen.getByText('What happens when I join the waitlist?')).toBeInTheDocument()
+    expect(screen.getByText('Is PromptForge free?')).toBeInTheDocument()
     expect(screen.getByText('Do I need an API key?')).toBeInTheDocument()
     expect(screen.getByText('Is my data stored anywhere?')).toBeInTheDocument()
-    expect(screen.getByText('What macOS version do I need?')).toBeInTheDocument()
-    expect(screen.getByText('Can I cancel Pro anytime?')).toBeInTheDocument()
-    expect(screen.getByText('Is Windows or Linux support coming?')).toBeInTheDocument()
+    expect(screen.getByText('Is this only for macOS?')).toBeInTheDocument()
     expect(screen.getByText(/How is this different from just asking ChatGPT/)).toBeInTheDocument()
   })
 
   it('renders answer about API key', () => {
     render(<FAQ />)
-    expect(screen.getByText(/Not on Pro — we include our own API/)).toBeInTheDocument()
+    expect(screen.getByText(/Not for the waitlist or the public demo/)).toBeInTheDocument()
   })
 
-  it('renders answer about cancellation', () => {
+  it('renders answer about early access', () => {
     render(<FAQ />)
-    expect(screen.getByText(/Yes, anytime — no questions asked/)).toBeInTheDocument()
+    expect(screen.getByText(/one launch email/)).toBeInTheDocument()
   })
 
-  it('renders answer about Windows', () => {
+  it('renders answer about platform support', () => {
     render(<FAQ />)
-    expect(screen.getByText(/Windows is next on our roadmap/)).toBeInTheDocument()
+    expect(screen.getByText(/web demo and waitlist work in the browser/)).toBeInTheDocument()
   })
 
   it('renders six faq-item elements', () => {

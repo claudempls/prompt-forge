@@ -58,7 +58,6 @@ export default function Nav() {
         <Link href="/#how" className="nav-link">How it works</Link>
         <Link href="/#features" className="nav-link">Features</Link>
         <Link href="/app" className="nav-link nav-link-forge">Forge</Link>
-        <Link href="/#pricing" className="nav-link">Pricing</Link>
 
         {user === undefined ? null : user ? (
           <>
@@ -79,8 +78,8 @@ export default function Nav() {
         ) : (
           <>
             <Link href="/login" className="nav-link">Sign in</Link>
-            <Link href="/upgrade" className="btn btn-primary" style={{ fontSize: '13px', padding: '7px 14px', borderRadius: '9px' }}>
-              Get Pro
+            <Link href="/#waitlist" className="btn btn-primary" style={{ fontSize: '13px', padding: '7px 14px', borderRadius: '9px' }}>
+              Join waitlist
             </Link>
             <Link href="/login" className="nav-account-icon" aria-label="Sign in">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
