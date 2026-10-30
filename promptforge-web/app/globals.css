@@ -2588,7 +2588,8 @@ html.lenis, html.lenis body { height: auto; }
   }
   .hero-waitlist { justify-self: center; margin: 0; }
   .hero-right { display: none; }
-  .hero-actions { order: 2; margin: 0; }
+  .hero-actions { order: 0; margin: 0; }
+  .hero-free-note { order: 0; margin: 0; text-align: center; }
   .hero-providers { order: 3; gap: 8px; }
   .hero-layout > .app-preview {
     order: 1;

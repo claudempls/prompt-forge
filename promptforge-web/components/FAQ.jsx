@@ -1,29 +1,30 @@
 import AnimateIn from '@/components/AnimateIn'
+import { ANON_FREE_FORGES, FREE_DAILY_FORGES, PRO_MONTHLY_PRICE } from '@/lib/plans'
 
 const faqs = [
   {
-    q: 'What happens when I join the waitlist?',
-    a: 'You get one launch email when early access opens. The email will explain the demo, free tier limits, and roadmap.',
-  },
-  {
     q: 'Is PromptForge free?',
-    a: 'The early-access version is being built around a free tier. Paid features may come later, but this launch page is only collecting interest for access.',
-  },
-  {
-    q: 'Do I need an API key?',
-    a: 'Not for the waitlist or the public demo. Some advanced versions may support your own API key later, but it is not required to join.',
-  },
-  {
-    q: 'Is my data stored anywhere?',
-    a: 'The waitlist stores your email address. Do not submit passwords, API keys, private documents, or sensitive personal data into preview forms.',
-  },
-  {
-    q: 'Is this only for macOS?',
-    a: 'The desktop app is macOS-first, but the web demo and waitlist work in the browser. Platform support may expand after launch.',
+    a: `Yes. Your first ${ANON_FREE_FORGES} prompts need no account. After that, sign in with Google for ${FREE_DAILY_FORGES} free prompts a day. Pro (${PRO_MONTHLY_PRICE}/month) removes the daily limit.`,
   },
   {
     q: 'How is this different from just asking ChatGPT to improve my prompt?',
-    a: 'The goal is to make prompt quality visible before you spend a model response. PromptForge focuses on missing context, constraints, structure, and reusable workflows.',
+    a: 'ChatGPT guesses what you meant. PromptForge asks first (audience, format, constraints), so the rewrite is based on your answers, not assumptions. You also get a before/after score showing what was missing.',
+  },
+  {
+    q: 'Do I need an API key?',
+    a: 'No. The web app runs on our Groq account. The Mac app can optionally use your own free Groq key.',
+  },
+  {
+    q: 'Which AI does the rewritten prompt work with?',
+    a: 'Any. The output is plain text you paste into ChatGPT, Claude, Gemini, a local LLM or anything else.',
+  },
+  {
+    q: 'Is my data stored anywhere?',
+    a: 'If you sign in, your prompts are saved to your history so you can reuse them. Do not paste passwords, API keys or sensitive personal data.',
+  },
+  {
+    q: 'Is there a Mac app?',
+    a: 'It is being prepared for release. It adds a global ⌥ Space shortcut that improves the text in whatever app you are typing in. Leave your email below and we will send one message when it ships.',
   },
 ]
 

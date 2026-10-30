@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import WaitlistForm from '@/components/WaitlistForm'
+import { ANON_FREE_FORGES, FREE_DAILY_FORGES } from '@/lib/plans'
 
 const DEMOS = [
   {
@@ -95,25 +95,24 @@ export default function Hero({ preview }) {
           <div className="hero-left">
             <div className="hero-eyebrow">
               <span className="hero-eyebrow-dot" />
-              Free early access opens soon
+              Free · {ANON_FREE_FORGES} prompts without signup
             </div>
   
             <h1 className="hero-title hero-title-animate">
-              Better prompts,<br /><em>before you ask.</em>
+              Stop rewriting prompts.<br /><em>Answer a few questions instead.</em>
             </h1>
   
             <p className="hero-sub hero-sub-animate">
-              PromptForge turns rough ideas into structured prompts, catches missing context, and gives you cleaner instructions for ChatGPT, Claude, Gemini, Groq, and local LLMs.
+              Paste a rough idea. PromptForge asks what&apos;s missing, then rewrites it into a precise prompt for ChatGPT, Claude, Gemini or your local LLM, with a before/after quality score.
             </p>
   
-            <div className="hero-waitlist hero-actions-animate">
-              <WaitlistForm />
-            </div>
-  
             <div className="hero-actions hero-actions-animate">
-              <Link href="/app" className="btn btn-ghost btn-lg">Try the demo</Link>
+              <Link href="/app" className="btn btn-primary btn-lg">Forge my first prompt →</Link>
               <Link href="/#how" className="btn btn-ghost btn-lg">See how it works</Link>
             </div>
+            <p className="waitlist-note hero-free-note">
+              {ANON_FREE_FORGES} prompts free, no account. Then {FREE_DAILY_FORGES} a day free with Google sign-in. No API key.
+            </p>
   
             <div className="hero-providers hero-providers-animate">
               <span className="hero-providers-label">Writes prompts for</span>

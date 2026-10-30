@@ -3,14 +3,13 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
+import { FREE_DAILY_FORGES, PRO_MONTHLY_PRICE, PRO_YEARLY_PRICE, YEARLY_CHECKOUT_AVAILABLE } from '@/lib/plans'
 
 const FEATURES = [
-  'Unlimited forges per day',
-  'Our API included — no key needed',
-  'Always the latest model',
-  'Sync across all devices',
-  'Priority support — <4h response',
-  'Early access to new features',
+  `Unlimited forges (free plan: ${FREE_DAILY_FORGES} a day)`,
+  'Everything in Free: all modes, history, quality scores',
+  'No API key needed, runs on our Groq account',
+  'Cancel anytime from your account',
 ]
 
 const CheckIcon = () => (
@@ -63,14 +62,17 @@ export default function UpgradePage() {
             Upgrade to <em>Pro</em>
           </h1>
           <p className="upgrade-sub">
-            Unlimited forges, no API key needed, always on the latest model.
+            No daily limit. Same tool, as many prompts as you need.
           </p>
 
           <div className="upgrade-card">
             <div className="upgrade-price-row">
-              <span className="upgrade-price">$3</span>
+              <span className="upgrade-price">{PRO_MONTHLY_PRICE}</span>
               <span className="upgrade-price-period">/ month</span>
             </div>
+            {YEARLY_CHECKOUT_AVAILABLE && (
+              <p className="upgrade-sub" style={{ marginTop: 4 }}>or {PRO_YEARLY_PRICE} / year (save 35 %)</p>
+            )}
 
             <ul className="upgrade-features">
               {FEATURES.map((f, i) => (
@@ -97,7 +99,7 @@ export default function UpgradePage() {
                 </>
               ) : (
                 <>
-                  Subscribe — $3/mo
+                  Subscribe — {PRO_MONTHLY_PRICE}/mo
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>

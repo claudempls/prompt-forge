@@ -12,7 +12,7 @@ export default function Features() {
                 <path d="M8.5 2l1.5 3 3.5.5-2.5 2.5.5 3.5-3-1.5-3 1.5.5-3.5L3.5 5.5 7 5z" stroke="#c97d3a" strokeWidth="1.3" strokeLinejoin="round"/>
               </svg>
             </div>
-            <h3>Learns your preferences</h3>
+            <h3>Learns your preferences <span className="pricing-badge" style={{ marginLeft: 6 }}>Mac app</span></h3>
             <p>After every session, PromptForge extracts what it learned about you — design taste, tone, complexity level — and uses it next time. The more you use it, the fewer questions you get.</p>
           </div>
 
@@ -40,7 +40,7 @@ export default function Features() {
                   </svg>
                 </div>
                 <h3>Powered by Groq</h3>
-                <p>Fast prompt refinement with Llama 3.3 70B on Groq. The desktop app uses your own free Groq API key. The web app needs no key.</p>
+                <p>Fast prompt refinement on Groq. The web app needs no key. The Mac app can use your own free Groq API key.</p>
               </div>
               <div style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div className="feature-icon">
@@ -49,7 +49,7 @@ export default function Features() {
                     <path d="M2 15c0-3.6 2.9-6.5 6.5-6.5S15 11.4 15 15" stroke="#c97d3a" strokeWidth="1.3" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <h3>Personalization dashboard</h3>
+                <h3>Personalization dashboard <span className="pricing-badge" style={{ marginLeft: 6 }}>Mac app</span></h3>
                 <p>See exactly what PromptForge knows about you. Edit or delete any preference. Full transparency, full control.</p>
               </div>
             </div>

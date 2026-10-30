@@ -78,8 +78,8 @@ export default function Nav() {
         ) : (
           <>
             <Link href="/login" className="nav-link">Sign in</Link>
-            <Link href="/#waitlist" className="btn btn-primary nav-waitlist" style={{ fontSize: '13px', padding: '7px 14px', borderRadius: '9px' }}>
-              Join waitlist
+            <Link href="/app" className="btn btn-primary nav-waitlist" style={{ fontSize: '13px', padding: '7px 14px', borderRadius: '9px' }}>
+              Try free
             </Link>
             <Link href="/login" className="nav-account-icon" aria-label="Sign in">
               <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
