@@ -1082,7 +1082,7 @@ footer {
   to   { opacity: 1; transform: translateY(0); }
 }
 .page-transition {
-  animation: pageIn 0.35s cubic-bezier(0.22,1,0.36,1) both;
+  animation: pageIn 0.35s cubic-bezier(0.22,1,0.36,1) backwards;
 }
 
 @keyframes fadeUp {
@@ -2517,3 +2517,94 @@ html.lenis, html.lenis body { height: auto; }
 .lenis.lenis-smooth [data-lenis-prevent] { overscroll-behavior: contain; }
 .lenis.lenis-stopped { overflow: clip; }
 .lenis.lenis-smooth iframe { pointer-events: none; }
+
+/* Retry controls remain usable on every screen size. */
+.forge-retry { min-height: 44px; justify-content: center; }
+.auth-error .forge-retry { display: flex; margin: 12px auto 0; }
+
+/* Mobile layout and touch controls; desktop styling stays above. */
+@media (max-width: 1023px) {
+  .decoration-layer {
+    position: absolute;
+    inset: 0;
+    overflow: clip;
+    pointer-events: none;
+  }
+  section, .hero, .app-preview, .cta-section { padding-inline: 20px; }
+  .btn, .nav-logo, .footer-logo { min-height: 44px; }
+  .footer-logo { display: inline-flex; align-items: center; }
+  .hero { position: relative; min-width: 0; }
+  input:not([type='checkbox']):not([type='radio']), textarea, select {
+    font-size: 16px;
+    min-height: 48px;
+    width: 100%;
+    min-width: 0;
+  }
+  .waitlist-submit { min-height: 48px; width: 100%; }
+  .nav-links .nav-waitlist {
+    min-height: 44px;
+    padding-inline: 14px;
+    font-size: 14px !important;
+  }
+  .nav-account-icon, .nav-account-avatar { width: 44px; height: 44px; }
+  .footer-links { flex-wrap: wrap; gap: 4px 12px; }
+  .footer-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 8px;
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-layout {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    margin-top: 0;
+    padding: 88px 20px 40px;
+    gap: 24px;
+  }
+  .hero { min-height: 0; padding-block: 28px 40px; }
+  /* Flatten the hero grid so the full app preview follows the signup form. */
+  .hero, .hero-inner, .hero-left { display: contents; }
+  .hero-inner > *, .hero-left > * { min-width: 0; }
+  .hero-title {
+    font-size: clamp(36px, 10vw, 48px);
+    line-height: 1.08;
+    letter-spacing: -0.03em;
+    text-align: center;
+    margin: 0;
+  }
+  .hero-eyebrow { justify-self: center; margin: 0; }
+  .hero-sub {
+    font-size: 16px;
+    line-height: 1.5;
+    max-width: 34ch;
+    text-align: center;
+    justify-self: center;
+    margin: 0;
+  }
+  .hero-waitlist { justify-self: center; margin: 0; }
+  .hero-right { display: none; }
+  .hero-actions { order: 2; margin: 0; }
+  .hero-providers { order: 3; gap: 8px; }
+  .hero-layout > .app-preview {
+    order: 1;
+    margin-inline: -20px;
+    width: calc(100% + 40px);
+    padding-block: 0;
+    min-width: 0;
+  }
+  .app-preview .hero-mockup { margin-top: 24px; max-height: 280px; overflow: hidden; }
+  .feature-card.wide > div > div { min-width: 0 !important; }
+  .forge-main { padding-inline: 20px; }
+}
+
+@media (max-width: 479px) {
+  .hero-actions { display: grid; grid-template-columns: 1fr; gap: 8px; width: 100%; }
+  .hero-actions .btn { min-height: 44px; width: 100%; justify-content: center; }
+  nav { padding-inline: 12px; }
+  .nav-logo { gap: 5px; font-size: 18px; }
+}

@@ -12,8 +12,7 @@ export default function HomePage() {
   return (
     <div className="wrap">
       <Nav />
-      <Hero />
-      <AppPreview />
+      <Hero preview={<AppPreview />} />
       <div className="divider" />
       <HowItWorks />
       <div className="divider" />

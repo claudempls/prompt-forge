@@ -78,7 +78,7 @@ export default function Nav() {
         ) : (
           <>
             <Link href="/login" className="nav-link">Sign in</Link>
-            <Link href="/#waitlist" className="btn btn-primary" style={{ fontSize: '13px', padding: '7px 14px', borderRadius: '9px' }}>
+            <Link href="/#waitlist" className="btn btn-primary nav-waitlist" style={{ fontSize: '13px', padding: '7px 14px', borderRadius: '9px' }}>
               Join waitlist
             </Link>
             <Link href="/login" className="nav-account-icon" aria-label="Sign in">

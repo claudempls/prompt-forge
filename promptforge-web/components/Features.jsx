@@ -39,8 +39,8 @@ export default function Features() {
                     <path d="M1 15h15" stroke="#c97d3a" strokeWidth="1.3" strokeLinecap="round"/>
                   </svg>
                 </div>
-                <h3>4 AI providers, one app</h3>
-                <p>Use your own Gemini, OpenAI, Anthropic or Groq API key. Or subscribe to Pro and use our API — no key management, just better prompts.</p>
+                <h3>Powered by Groq</h3>
+                <p>Fast prompt refinement with Llama 3.3 70B on Groq. The desktop app uses your own free Groq API key. The web app needs no key.</p>
               </div>
               <div style={{ flex: 1, minWidth: '200px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <div className="feature-icon">

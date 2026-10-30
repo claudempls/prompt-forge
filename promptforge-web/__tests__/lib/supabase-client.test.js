@@ -51,3 +51,26 @@ describe('Supabase browser client', () => {
     expect(typeof client.from).toBe('function')
   })
 })
+
+it('reports an initial signed-out session without Supabase configuration', async () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  delete process.env.NEXT_PUBLIC_SUPABASE_URL
+  delete process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  try {
+    const client = createClient()
+    const callback = jest.fn()
+    const { data: { subscription } } = client.auth.onAuthStateChange(callback)
+    await Promise.resolve()
+    expect(callback).toHaveBeenCalledWith('INITIAL_SESSION', null)
+    expect(await client.auth.getUser()).toEqual({ data: { user: null }, error: null })
+    subscription.unsubscribe()
+    const cancelled = jest.fn()
+    client.auth.onAuthStateChange(cancelled).data.subscription.unsubscribe()
+    await Promise.resolve()
+    expect(cancelled).not.toHaveBeenCalled()
+  } finally {
+    if (url !== undefined) process.env.NEXT_PUBLIC_SUPABASE_URL = url
+    if (key !== undefined) process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY = key
+  }
+})

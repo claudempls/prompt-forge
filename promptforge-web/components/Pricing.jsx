@@ -13,7 +13,7 @@ export default function Pricing() {
         <AnimateIn>
           <div className="section-label">Pricing</div>
           <h2 className="section-title">Simple, honest <em>pricing.</em></h2>
-          <p className="section-sub">Start free with your own API key. Upgrade when you want the convenience.</p>
+          <p className="section-sub">Start on the web with no API key, or use your own free Groq key in the desktop app.</p>
         </AnimateIn>
 
         <div className="pricing-grid">
@@ -23,17 +23,17 @@ export default function Pricing() {
               <div>
                 <div className="pricing-name">Free</div>
                 <div className="pricing-price">$0<span> / forever</span></div>
-                <p className="pricing-desc">Everything you need to get started. Bring your own API key.</p>
+                <p className="pricing-desc">Use the web app with no key, or bring your own free Groq API key on desktop.</p>
               </div>
               <div className="pricing-features">
-                <div className="pricing-feature"><CheckIcon />Your own Gemini, OpenAI, Anthropic or Groq key</div>
+                <div className="pricing-feature"><CheckIcon />Desktop: your own free Groq API key</div>
                 <div className="pricing-feature"><CheckIcon />Unlimited sessions</div>
                 <div className="pricing-feature"><CheckIcon />Quick Mode (⌥ Space from any app)</div>
                 <div className="pricing-feature"><CheckIcon />Full history &amp; personalization</div>
-                <div className="pricing-feature"><CheckIcon />Works offline with local models</div>
+                <div className="pricing-feature"><CheckIcon />Llama 3.3 70B powered by Groq</div>
               </div>
-              <a href="#" className="btn btn-ghost" style={{ textAlign: 'center', justifyContent: 'center', fontSize: '13px' }}>
-                Download free
+              <a href="/app" className="btn btn-ghost" style={{ textAlign: 'center', justifyContent: 'center', fontSize: '13px' }}>
+                Start free
               </a>
             </div>
           </AnimateIn>
@@ -45,11 +45,11 @@ export default function Pricing() {
                 <div className="pricing-badge">Most popular</div>
                 <div className="pricing-name" style={{ color: 'var(--accent-soft)' }}>Pro</div>
                 <div className="pricing-price">$3<span> / month</span></div>
-                <p className="pricing-desc">No key management, always the latest model, synced across devices.</p>
+                <p className="pricing-desc">No key management. Prompt refinement powered by Groq.</p>
               </div>
               <div className="pricing-features">
-                <div className="pricing-feature"><CheckIcon />Our API included — no key needed</div>
-                <div className="pricing-feature"><CheckIcon />Gemini 2.0 Flash, always on latest model</div>
+                <div className="pricing-feature"><CheckIcon />Groq API included — no key needed</div>
+                <div className="pricing-feature"><CheckIcon />Llama 3.3 70B for fast prompt refinement</div>
                 <div className="pricing-feature"><CheckIcon />Preference sync across all your Macs</div>
                 <div className="pricing-feature"><CheckIcon />Priority support with &lt;4h response time</div>
                 <div className="pricing-feature"><CheckIcon />Early access to new features</div>

@@ -26,12 +26,13 @@ describe('Hero component', () => {
     expect(screen.getByText('See how it works')).toBeInTheDocument()
   })
 
-  it('renders all AI provider pills', () => {
+  it('renders target model pills', () => {
     render(<Hero />)
+    expect(screen.getByText('Writes prompts for')).toBeInTheDocument()
     expect(screen.getByText('Gemini')).toBeInTheDocument()
-    expect(screen.getByText('OpenAI')).toBeInTheDocument()
-    expect(screen.getByText('Anthropic')).toBeInTheDocument()
-    expect(screen.getByText('Groq')).toBeInTheDocument()
+    expect(screen.getByText('ChatGPT')).toBeInTheDocument()
+    expect(screen.getByText('Claude')).toBeInTheDocument()
+    expect(screen.getByText('local LLMs')).toBeInTheDocument()
   })
 
   it('renders the eyebrow badge', () => {

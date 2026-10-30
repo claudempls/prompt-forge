@@ -28,7 +28,7 @@ const LOAD_PAUSE   = 900
 const READ_PAUSE   = 3200
 const RESET_PAUSE  = 500
 
-export default function Hero() {
+export default function Hero({ preview }) {
   const [idx, setIdx]         = useState(0)
   const [phase, setPhase]     = useState('typing-before')
   const [beforeText, setBefore] = useState('')
@@ -84,94 +84,99 @@ export default function Hero() {
   }, [phase, beforeText, afterText, idx])
 
   return (
-    <section className="hero">
-      <div className="hero-orb" aria-hidden="true" />
-
-      <div className="hero-inner">
-        {/* ── LEFT ── */}
-        <div className="hero-left">
-          <div className="hero-eyebrow">
-            <span className="hero-eyebrow-dot" />
-            Free early access opens soon
-          </div>
-
-          <h1 className="hero-title hero-title-animate">
-            Better prompts,<br /><em>before you ask.</em>
-          </h1>
-
-          <p className="hero-sub hero-sub-animate">
-            PromptForge turns rough ideas into structured prompts, catches missing context, and gives you cleaner instructions for ChatGPT, Claude, Gemini, Groq, and local LLMs.
-          </p>
-
-          <div className="hero-waitlist hero-actions-animate">
-            <WaitlistForm />
-          </div>
-
-          <div className="hero-actions hero-actions-animate">
-            <Link href="/app" className="btn btn-ghost btn-lg">Try the demo</Link>
-            <Link href="/#how" className="btn btn-ghost btn-lg">See how it works</Link>
-          </div>
-
-          <div className="hero-providers hero-providers-animate">
-            <span className="hero-providers-label">Works with</span>
-            <div className="provider-pill provider-pill-active"><span className="provider-dot" style={{ background: '#f55036' }} />Groq</div>
-            <div className="provider-pill provider-pill-active"><span className="provider-dot" style={{ background: '#4285F4' }} />Gemini</div>
-            <div className="provider-pill provider-pill-active"><span className="provider-dot" style={{ background: '#10a37f' }} />OpenAI</div>
-            <div className="provider-pill provider-pill-active"><span className="provider-dot" style={{ background: '#c97d3a' }} />Anthropic</div>
-          </div>
+    <div className="hero-layout">
+      <section className="hero">
+        <div className="decoration-layer" aria-hidden="true">
+          <div className="hero-orb" />
         </div>
-
-        {/* ── RIGHT — animated demo ── */}
-        <div className="hero-right hero-mockup-animate">
-          <div className="hero-demo">
-            <div className="demo-header">
-              <span className="demo-dot" style={{ background: '#ff5f57' }} />
-              <span className="demo-dot" style={{ background: '#febc2e' }} />
-              <span className="demo-dot" style={{ background: '#28c840' }} />
-              <span className="demo-title">PromptForge</span>
+  
+        <div className="hero-inner">
+          {/* ── LEFT ── */}
+          <div className="hero-left">
+            <div className="hero-eyebrow">
+              <span className="hero-eyebrow-dot" />
+              Free early access opens soon
             </div>
-
-            <div className="demo-body">
-              {/* Before */}
-              <div className="demo-row">
-                <span className="demo-label demo-label-before">Rough</span>
-                <div className="demo-bubble demo-bubble-before">
-                  <span>{beforeText}</span>
-                  {(phase === 'typing-before') && <span className="demo-cursor" />}
-                </div>
+  
+            <h1 className="hero-title hero-title-animate">
+              Better prompts,<br /><em>before you ask.</em>
+            </h1>
+  
+            <p className="hero-sub hero-sub-animate">
+              PromptForge turns rough ideas into structured prompts, catches missing context, and gives you cleaner instructions for ChatGPT, Claude, Gemini, Groq, and local LLMs.
+            </p>
+  
+            <div className="hero-waitlist hero-actions-animate">
+              <WaitlistForm />
+            </div>
+  
+            <div className="hero-actions hero-actions-animate">
+              <Link href="/app" className="btn btn-ghost btn-lg">Try the demo</Link>
+              <Link href="/#how" className="btn btn-ghost btn-lg">See how it works</Link>
+            </div>
+  
+            <div className="hero-providers hero-providers-animate">
+              <span className="hero-providers-label">Writes prompts for</span>
+              <div className="provider-pill provider-pill-active"><span className="provider-dot" style={{ background: '#f55036' }} />local LLMs</div>
+              <div className="provider-pill provider-pill-active"><span className="provider-dot" style={{ background: '#4285F4' }} />Gemini</div>
+              <div className="provider-pill provider-pill-active"><span className="provider-dot" style={{ background: '#10a37f' }} />ChatGPT</div>
+              <div className="provider-pill provider-pill-active"><span className="provider-dot" style={{ background: '#c97d3a' }} />Claude</div>
+            </div>
+          </div>
+  
+          {/* ── RIGHT — animated demo ── */}
+          <div className="hero-right hero-mockup-animate">
+            <div className="hero-demo">
+              <div className="demo-header">
+                <span className="demo-dot" style={{ background: '#ff5f57' }} />
+                <span className="demo-dot" style={{ background: '#febc2e' }} />
+                <span className="demo-dot" style={{ background: '#28c840' }} />
+                <span className="demo-title">PromptForge</span>
               </div>
-
-              {/* Loading / After */}
-              {phase === 'loading' && (
-                <div className="demo-row demo-row-after">
-                  <span className="demo-label demo-label-after">Forging</span>
-                  <div className="demo-bubble demo-bubble-after">
-                    <span className="demo-dots">
-                      <span /><span /><span />
-                    </span>
+  
+              <div className="demo-body">
+                {/* Before */}
+                <div className="demo-row">
+                  <span className="demo-label demo-label-before">Rough</span>
+                  <div className="demo-bubble demo-bubble-before">
+                    <span>{beforeText}</span>
+                    {(phase === 'typing-before') && <span className="demo-cursor" />}
                   </div>
                 </div>
-              )}
-
-              {showAfter && phase !== 'loading' && (
-                <div className="demo-row demo-row-after">
-                  <span className="demo-label demo-label-after">Refined</span>
-                  <div className="demo-bubble demo-bubble-after">
-                    <span>{afterText}</span>
-                    {phase === 'typing-after' && <span className="demo-cursor demo-cursor-after" />}
+  
+                {/* Loading / After */}
+                {phase === 'loading' && (
+                  <div className="demo-row demo-row-after">
+                    <span className="demo-label demo-label-after">Forging</span>
+                    <div className="demo-bubble demo-bubble-after">
+                      <span className="demo-dots">
+                        <span /><span /><span />
+                      </span>
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
-
-            <div className="demo-footer">
-              {[0,1,2,3].map(i => (
-                <span key={i} className={`demo-pip${i === idx ? ' active' : ''}`} />
-              ))}
+                )}
+  
+                {showAfter && phase !== 'loading' && (
+                  <div className="demo-row demo-row-after">
+                    <span className="demo-label demo-label-after">Refined</span>
+                    <div className="demo-bubble demo-bubble-after">
+                      <span>{afterText}</span>
+                      {phase === 'typing-after' && <span className="demo-cursor demo-cursor-after" />}
+                    </div>
+                  </div>
+                )}
+              </div>
+  
+              <div className="demo-footer">
+                {[0,1,2,3].map(i => (
+                  <span key={i} className={`demo-pip${i === idx ? ' active' : ''}`} />
+                ))}
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </section>
+      </section>
+    {preview}
+    </div>
   )
 }

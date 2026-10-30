@@ -1,11 +1,15 @@
 import { createBrowserClient } from '@supabase/ssr'
 
-const stubSubscription = { data: { subscription: { unsubscribe: () => {} } } }
-
 function makeStub() {
   const stub = {
     auth: {
-      onAuthStateChange: () => stubSubscription,
+      onAuthStateChange: (callback) => {
+        let active = true
+        queueMicrotask(() => {
+          if (active) callback('INITIAL_SESSION', null)
+        })
+        return { data: { subscription: { unsubscribe: () => { active = false } } } }
+      },
       getUser: async () => ({ data: { user: null }, error: null }),
       getSession: async () => ({ data: { session: null }, error: null }),
       signInWithOAuth: async () => ({ data: null, error: null }),

@@ -23,8 +23,8 @@ describe('Pricing component', () => {
 
   it('renders download and upgrade buttons', () => {
     render(<Pricing />)
-    expect(screen.getByText('Download free')).toBeInTheDocument()
-    expect(screen.getByText('Get Pro — $3/mo')).toBeInTheDocument()
+    expect(screen.getByText('Start free')).toHaveAttribute('href', '/app')
+    expect(screen.getByText('Get Pro — $3/mo')).toHaveAttribute('href', '/upgrade')
   })
 
   it('renders feature lists', () => {
@@ -50,7 +50,7 @@ describe('Pricing component', () => {
 
   it('renders plan descriptions', () => {
     render(<Pricing />)
-    expect(screen.getByText(/Bring your own API key/)).toBeInTheDocument()
+    expect(screen.getByText(/bring your own free Groq API key/)).toBeInTheDocument()
     expect(screen.getByText(/No key management/)).toBeInTheDocument()
   })
 })
