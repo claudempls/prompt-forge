@@ -9,3 +9,5 @@ dist-electron/
 .env.local
 .env*.local
 .vercel
+.idea/
+.vscode/
