@@ -75,7 +75,8 @@ export default function AppPage() {
   const [authLoading, setAuthLoading] = useState(true)
   const [authError, setAuthError] = useState(null)
   const [authAttempt, setAuthAttempt] = useState(0)
-  const [usedToday, setUsedToday] = useState(0)
+  const [remaining, setRemaining] = useState(null)
+  const [anonLimited, setAnonLimited] = useState(false)
   const [step, setStep] = useState(STEPS.INPUT)
   const [roughPrompt, setRoughPrompt] = useState('')
   const [questions, setQuestions] = useState([])
@@ -100,22 +101,19 @@ export default function AppPage() {
       try {
         const state = await withTimeout(async () => {
           const u = await getUser()
-          if (!u) return { user: null, plan: null, used: 0 }
+          const { res, data: usage } = await requestJson('/api/usage')
+          if (!res.ok) throw new Error(usage.error || 'Unable to load usage.')
+          if (!u) return { user: null, plan: null, remaining: usage.remaining }
           const { data: profile, error: profileError } = await supabase
             .from('profiles').select('plan').eq('id', u.id).maybeSingle()
           if (profileError) throw profileError
-          const todayStart = new Date()
-          todayStart.setHours(0, 0, 0, 0)
-          const { count, error: historyError } = await supabase
-            .from('prompt_history').select('*', { count: 'exact', head: true })
-            .eq('user_id', u.id).gte('created_at', todayStart.toISOString())
-          if (historyError) throw historyError
-          return { user: u, plan: profile?.plan ?? 'free', used: count ?? 0 }
+          return { user: u, plan: profile?.plan ?? 'free', remaining: usage.remaining }
         })
         if (!active || current !== revision) return
         setUser(state.user)
         setPlan(state.plan)
-        setUsedToday(state.used)
+        setRemaining(state.remaining)
+        setAnonLimited(false)
         setAuthError(null)
       } catch (e) {
         if (active && current === revision) setAuthError(e.message || 'Unable to load the editor.')
@@ -167,11 +165,11 @@ export default function AppPage() {
           body: JSON.stringify({ prompt: cleanPrompt, questions: [], answers: [], mode }),
         })
         if (res.status === 401) { setStep(STEPS.INPUT); setUser(null); router.push('/login?next=/app'); return }
-        if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setStep(STEPS.INPUT); return }
+        if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setRemaining(data.remaining); setAnonLimited(data.code === 'LIMIT_ANON'); setStep(STEPS.INPUT); return }
         if (!res.ok) throw new Error(data.error || 'Failed to refine prompt')
         setResult(data)
         setStep(STEPS.RESULT)
-        setUsedToday(prev => prev + 1)
+        setRemaining(data.remaining)
         if (user) {
           await supabase.from('prompt_history').insert({
             user_id: user.id,
@@ -196,8 +194,9 @@ export default function AppPage() {
         body: JSON.stringify({ prompt: cleanPrompt, mode }),
       })
       if (res.status === 401) { setStep(STEPS.INPUT); setUser(null); router.push('/login?next=/app'); return }
-      if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setStep(STEPS.INPUT); return }
+      if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setRemaining(data.remaining); setAnonLimited(data.code === 'LIMIT_ANON'); setStep(STEPS.INPUT); return }
       if (!res.ok) throw new Error(data.error || 'Failed to generate questions')
+      setRemaining(data.remaining)
       setQuestions(data.questions)
       setAnswers([])
       setCurrentQ(0)
@@ -238,12 +237,12 @@ export default function AppPage() {
       })
 
       if (res.status === 401) { setStep(STEPS.INPUT); setUser(null); router.push('/login?next=/app'); return }
-      if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setStep(STEPS.INPUT); return }
+      if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setRemaining(data.remaining); setAnonLimited(data.code === 'LIMIT_ANON'); setStep(STEPS.INPUT); return }
       if (!res.ok) throw new Error(data.error || 'Failed to refine prompt')
 
       setResult(data)
       setStep(STEPS.RESULT)
-      setUsedToday(prev => prev + 1)
+      setRemaining(data.remaining)
 
       // Save to history
       if (user) {
@@ -315,31 +314,6 @@ export default function AppPage() {
     )
   }
 
-  // ── Not logged in ─────────────────────────────────────────────────────────────
-  if (!user) {
-    return (
-      <div className="wrap">
-        <Nav />
-        <main className="forge-main">
-          <div className="forge-step forge-gate">
-            <div className="forge-eyebrow">
-              <span className="hero-eyebrow-dot" />
-              PromptForge Web
-            </div>
-            <h1 className="forge-title">Sign in to<br /><em>start forging</em></h1>
-            <p className="forge-sub">Create an account and subscribe to start transforming your prompts.</p>
-            <a href="/login" className="btn btn-primary btn-lg forge-submit">
-              Sign in with Google
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </a>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
   // ── Full forge UI ─────────────────────────────────────────────────────────────
   return (
     <div className="wrap">
@@ -355,19 +329,23 @@ export default function AppPage() {
             </div>
             <h1 className="forge-title">What do you want<br /><em>to create?</em></h1>
             <p className="forge-sub">
-              Paste any rough prompt. We'll ask a few smart questions and return something far more precise.
+              {!user ? 'Try 2 forges free, no sign-up. ' : ''}Paste any rough prompt. We'll ask a few smart questions and return something far more precise.
             </p>
 
-            {plan === 'free' && (
+            {!user && remaining !== null && (
+              <p className="forge-usage-label">{remaining} free tries left — sign in for 5/day</p>
+            )}
+
+            {plan === 'free' && remaining !== null && (
               <div className="forge-usage-bar-wrap">
                 <span className="forge-usage-label">
-                  {usedToday >= 5
+                  {remaining === 0
                     ? <>Daily limit reached · <a href="/upgrade" style={{ color: 'var(--accent)' }}>Upgrade to Pro</a></>
-                    : <>{5 - usedToday} forge{5 - usedToday !== 1 ? 's' : ''} remaining today</>
+                    : <>{remaining} forge{remaining !== 1 ? 's' : ''} remaining today</>
                   }
                 </span>
                 <div className="forge-usage-track">
-                  <div className="forge-usage-fill" style={{ width: `${Math.min((usedToday / 5) * 100, 100)}%` }} />
+                  <div className="forge-usage-fill" style={{ width: `${Math.min(((5 - remaining) / 5) * 100, 100)}%` }} />
                 </div>
               </div>
             )}
@@ -377,7 +355,15 @@ export default function AppPage() {
                 {error.includes('GROQ_API_KEY') ? (
                   <>Add <code>GROQ_API_KEY</code> to your <code>.env.local</code></>
                 ) : error}
-                <button className="btn btn-primary forge-retry" onClick={handleStart}>Try again</button>
+                {anonLimited ? (
+                  <button className="btn btn-primary forge-retry" style={{ minHeight: 44 }} onClick={async () => {
+                    const { error: loginError } = await supabase.auth.signInWithOAuth({
+                      provider: 'google',
+                      options: { redirectTo: `${window.location.origin}/auth/callback?next=/app` },
+                    })
+                    if (loginError) setError(loginError.message)
+                  }}>Sign in with Google</button>
+                ) : <button className="btn btn-primary forge-retry" onClick={handleStart}>Try again</button>}
               </div>
             )}
 
@@ -592,9 +578,9 @@ export default function AppPage() {
               <button className="btn btn-ghost" onClick={handleReset}>
                 ← Try another prompt
               </button>
-              <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
+              {user && <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
                 View history →
-              </button>
+              </button>}
             </div>
           </div>
         )}

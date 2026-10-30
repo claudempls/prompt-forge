@@ -26,7 +26,7 @@ beforeEach(() => {
     from: jest.fn(() => query),
   }
   createClient.mockReturnValue(client)
-  global.fetch = jest.fn()
+  global.fetch = jest.fn().mockResolvedValue({ ok: true, json: async () => ({ remaining: 2 }) })
 })
 
 afterEach(() => {
@@ -38,11 +38,11 @@ async function settle() {
   await act(async () => {})
 }
 
-it('resolves to the sign-in prompt even when no auth event arrives', async () => {
+it('opens the anonymous editor even when no auth event arrives', async () => {
   render(<AppPage />)
   expect(screen.getByText('Loading editor…')).toBeInTheDocument()
   await settle()
-  expect(screen.getByRole('link', { name: /Sign in with Google/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Forge my prompt/ })).toBeInTheDocument()
   expect(screen.queryByText('Loading editor…')).not.toBeInTheDocument()
 })
 
@@ -57,7 +57,7 @@ it('times out after eight seconds, ignores late auth results, and retries', asyn
   expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument()
   fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
   await settle()
-  expect(screen.getByRole('link', { name: /Sign in with Google/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Forge my prompt/ })).toBeInTheDocument()
 })
 
 it('shows an error and retry button on authentication failure', async () => {
@@ -78,11 +78,11 @@ it('shows an error if loading the profile fails', async () => {
 
 it.each(['timeout', 'failure', 'body timeout'])('recovers from API %s with a retry control', async (kind) => {
   client.auth.getUser.mockResolvedValue({ data: { user }, error: null })
+  render(<AppPage />)
+  await settle()
   if (kind === 'failure') global.fetch.mockRejectedValue(new Error('API unavailable'))
   else if (kind === 'body timeout') global.fetch.mockResolvedValue({ json: () => new Promise(() => {}) })
   else global.fetch.mockImplementation(() => new Promise(() => {}))
-  render(<AppPage />)
-  await settle()
   fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Write a useful prompt' } })
   fireEvent.click(screen.getByRole('button', { name: /Forge my prompt/ }))
   await settle()
@@ -98,5 +98,19 @@ it('treats a missing stored auth session as signed out', async () => {
   client.auth.getUser.mockResolvedValue({ data: { user: null }, error: { name: 'AuthSessionMissingError' } })
   render(<AppPage />)
   await settle()
-  expect(screen.getByRole('link', { name: /Sign in with Google/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /Forge my prompt/ })).toBeInTheDocument()
+})
+
+
+it('offers Google login after the anonymous limit and uses server remaining', async () => {
+  render(<AppPage />)
+  await settle()
+  expect(screen.getByText('2 free tries left — sign in for 5/day')).toBeInTheDocument()
+  global.fetch.mockResolvedValue({ ok: false, status: 403, json: async () => ({ error: 'Sign in for more', code: 'LIMIT_ANON', remaining: 0 }) })
+  fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Write a letter' } })
+  fireEvent.click(screen.getByRole('button', { name: /Forge my prompt/ }))
+  await settle()
+  expect(screen.getByText('0 free tries left — sign in for 5/day')).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: 'Sign in with Google' })).toHaveStyle({ minHeight: '44px' })
+  expect(client.from).not.toHaveBeenCalled()
 })

@@ -1,4 +1,4 @@
-import { buildQuestionsSystemPrompt, buildRefinementSystemPrompt, buildPreferencesContext } from '@shared/prompts'
+import { parseModelJson, buildQuestionsSystemPrompt, buildRefinementSystemPrompt, buildPreferencesContext } from '@shared/prompts'
 
 describe('shared prompt contracts', () => {
   test.each(['lite', 'standard', 'expert', 'compact'])('%s preserves intent and response fields on both platforms', (mode) => {
@@ -40,4 +40,12 @@ describe('shared prompt contracts', () => {
     expect(context).toContain('tone: professional')
     expect(context).toContain('Respond in language: Čeština.')
   })
+})
+
+
+test.each([
+  '```json\n{"text":"value"}\n```',
+  'Commentary: {"text":"a } brace and \\"quote\\"", "nested":{"a":1}} trailing {"ignored":true}',
+])('parses fenced or surrounded model JSON: %s', (text) => {
+  expect(parseModelJson(text)).toHaveProperty('text')
 })

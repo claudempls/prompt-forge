@@ -1,4 +1,4 @@
-import { buildQuestionsSystemPrompt, buildRefinementSystemPrompt, buildPreferencesContext, buildPreferenceTagsSystemPrompt, skipsQuestions } from '@shared/prompts'
+import { GROQ_MODEL, parseModelJson, buildQuestionsSystemPrompt, buildRefinementSystemPrompt, buildPreferencesContext, buildPreferenceTagsSystemPrompt, skipsQuestions } from '@shared/prompts'
 import { getPreferences, canUseToday, incrementDailyUsage } from './store'
 
 export interface Question {
@@ -20,7 +20,6 @@ import type { Category, Mode } from '@shared/prompts'
 export type { Category, Mode } from '@shared/prompts'
 
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions'
-const MODEL = 'llama-3.3-70b-versatile'
 
 async function groq(apiKey: string, systemPrompt: string, userMessage: string): Promise<string> {
   const res = await fetch(GROQ_URL, {
@@ -30,7 +29,8 @@ async function groq(apiKey: string, systemPrompt: string, userMessage: string): 
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: GROQ_MODEL,
+      reasoning_effort: 'low',
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: systemPrompt },
@@ -72,7 +72,7 @@ export async function generateQuestions(
 
   const raw = await groq(apiKey, systemPrompt, `User's prompt:\n"${userPrompt}"`)
   try {
-    const parsed = JSON.parse(raw) as { questions: Question[] }
+    const parsed = parseModelJson(raw) as { questions: Question[] }
     return parsed.questions ?? []
   } catch {
     throw new Error('Invalid response from Groq for questions.')
@@ -115,7 +115,7 @@ export async function enhancePrompt(
 
   const raw = await groq(apiKey, systemPrompt, userMessage)
   try {
-    return JSON.parse(raw) as EnhanceResult
+    return parseModelJson(raw) as EnhanceResult
   } catch {
     throw new Error('Invalid response from Groq for enhancement.')
   }
@@ -137,5 +137,5 @@ export async function extractPreferenceTags(
   const systemPrompt = buildPreferenceTagsSystemPrompt(topicCategory)
 
   const raw = await groq(apiKey, systemPrompt, `Q&A:\n${qaBlock}`)
-  try { return JSON.parse(raw) as Record<string, string[]> } catch { return {} }
+  try { return parseModelJson(raw) as Record<string, string[]> } catch { return {} }
 }

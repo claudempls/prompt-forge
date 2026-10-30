@@ -32,8 +32,11 @@ npm run build
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=          # Stripe webhook and waitlist
+SUPABASE_SERVICE_ROLE_KEY=          # Server-side usage, Stripe webhook and waitlist
 GROQ_API_KEY=
+GROQ_MODEL=                          # optional; defaults to openai/gpt-oss-120b
+GROQ_ANON_MODEL=                     # optional; signed-out users, defaults to openai/gpt-oss-20b
+USAGE_SALT=                          # random server-only secret for anonymous IP hashing
 STRIPE_SECRET_KEY=
 STRIPE_WEBHOOK_SECRET=
 STRIPE_PRO_PRICE_ID=                # $3/month recurring price
@@ -43,9 +46,11 @@ RESEND_API_KEY=                     # optional; without it the signup is saved a
 WAITLIST_FROM_EMAIL="PromptForge <hello@promptforge.ai>"
 ```
 
+Usage is enforced by the server: anonymous visitors get 2 lifetime forges (secure HTTP-only cookie plus salted IP hash), signed-in free users get 5 per UTC day, and Pro is unlimited. Only successful refinements count; questions and deletable history do not. Missing service-role configuration allows requests with a warning in development and returns 503 in production. Anonymous usage also requires `USAGE_SALT`. Deploy behind a trusted proxy that replaces `x-forwarded-for`. The anonymous cookie requires HTTPS.
+
 ## Supabase
 
-Run `supabase/schema.sql` and then `supabase/migrations/001_stripe_and_model_used.sql` in the SQL editor. Add `https://<domain>/auth/callback` to the redirect URLs.
+Run `supabase/schema.sql` and then `supabase/migrations/001_stripe_and_model_used.sql` and `supabase/migrations/002_lock_plan_and_server_usage.sql` in the SQL editor. Add `https://<domain>/auth/callback` to the redirect URLs.
 
 ## Stripe
 

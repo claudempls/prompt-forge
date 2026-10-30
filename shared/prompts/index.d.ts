@@ -1,3 +1,6 @@
+export const GROQ_MODEL: string
+export const GROQ_ANON_MODEL: string
+export function parseModelJson(text: string): any
 export type Mode = 'lite' | 'standard' | 'expert' | 'compact'
 export type PromptMode = Mode | 'auto'
 export type Category = 'auto' | 'code' | 'mail' | 'content' | 'data' | 'image' | 'seo' | 'chat'

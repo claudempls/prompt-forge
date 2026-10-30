@@ -1,3 +1,27 @@
+export const GROQ_MODEL = 'openai/gpt-oss-120b'
+// Cheaper model for anonymous (signed-out) web forges.
+export const GROQ_ANON_MODEL = 'openai/gpt-oss-20b'
+
+// Accept fenced JSON or surrounding model commentary, respecting braces in strings.
+export function parseModelJson(text) {
+  const source = (text ?? '').trim().replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '')
+  const start = source.indexOf('{')
+  let depth = 0
+  let quoted = false
+  let escaped = false
+  for (let i = start; start >= 0 && i < source.length; i++) {
+    const char = source[i]
+    if (quoted) {
+      if (escaped) escaped = false
+      else if (char === '\\') escaped = true
+      else if (char === '"') quoted = false
+    } else if (char === '"') quoted = true
+    else if (char === '{') depth++
+    else if (char === '}' && --depth === 0) return JSON.parse(source.slice(start, i + 1))
+  }
+  throw new Error('Invalid JSON response from model')
+}
+
 // Canonical prompts for web and desktop. Keep transport and storage outside this module.
 
 export const REFINEMENT_RULES = `UNIVERSAL RULES — ALWAYS APPLY:

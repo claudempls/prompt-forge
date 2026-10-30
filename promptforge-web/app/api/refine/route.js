@@ -1,12 +1,12 @@
-import { buildRefinementSystemPrompt } from '@shared/prompts'
+import { GROQ_MODEL, GROQ_ANON_MODEL, parseModelJson, buildRefinementSystemPrompt } from '@shared/prompts'
 import Groq from 'groq-sdk'
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { assertCanForge, recordForge, usageError } from '@/lib/usage'
 
 export async function POST(request) {
-  const { prompt, questions, answers, mode = 'auto' } = await request.json()
+  const { prompt, questions = [], answers = [], mode = 'auto' } = await request.json()
 
-  if (!prompt) {
+  if (!prompt?.trim()) {
     return NextResponse.json({ error: 'Prompt is required' }, { status: 400 })
   }
 
@@ -14,38 +14,11 @@ export async function POST(request) {
     return NextResponse.json({ error: 'GROQ_API_KEY is not configured.' }, { status: 500 })
   }
 
-  // ── Auth + usage check ─────────────────────────────────────────────────────
+  let usage
   try {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
-    }
-
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('plan')
-      .eq('id', user.id)
-      .maybeSingle()
-
-    if (profile?.plan !== 'pro') {
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
-
-      const { count } = await supabase
-        .from('prompt_history')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
-        .gte('created_at', todayStart.toISOString())
-
-      if ((count ?? 0) >= 5) {
-        return NextResponse.json({ error: 'Daily limit reached. Upgrade to Pro for unlimited forges.' }, { status: 403 })
-      }
-    }
-  } catch (e) {
-    console.error('[refine] auth check error:', e)
-    return NextResponse.json({ error: 'Auth error' }, { status: 500 })
+    usage = await assertCanForge(request)
+  } catch (error) {
+    return NextResponse.json(usageError(error), { status: error.status || 503 })
   }
 
   // ── Generate ───────────────────────────────────────────────────────────────
@@ -58,7 +31,10 @@ export async function POST(request) {
 
 
     const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
+      model: usage.user
+        ? (process.env.GROQ_MODEL || GROQ_MODEL)
+        : (process.env.GROQ_ANON_MODEL || GROQ_ANON_MODEL),
+      reasoning_effort: 'low',
       temperature: 0.5,
       response_format: { type: 'json_object' },
       messages: [
@@ -73,10 +49,12 @@ export async function POST(request) {
       ],
     })
 
-    const data = JSON.parse(completion.choices[0].message.content.trim())
-    return NextResponse.json(data)
+    const data = parseModelJson(completion.choices[0].message.content)
+    if (typeof data.refined !== 'string' || !data.refined.trim()) throw new Error('Invalid response shape from model')
+    const remaining = await recordForge(usage)
+    return NextResponse.json({ ...data, remaining })
   } catch (e) {
     console.error('[refine] generation error:', e)
-    return NextResponse.json({ error: e.message }, { status: 500 })
+    return NextResponse.json(usageError(e), { status: e.status || 500 })
   }
 }

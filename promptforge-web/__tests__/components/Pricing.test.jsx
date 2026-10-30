@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom'
 import { render, screen } from '@testing-library/react'
 import Pricing from '@/components/Pricing'
+import { PRO_MONTHLY_PRICE } from '@/lib/plans'
 
 jest.mock('@/components/AnimateIn', () => {
   return function AnimateIn({ children }) {
@@ -17,25 +18,25 @@ describe('Pricing component', () => {
 
   it('shows correct prices', () => {
     render(<Pricing />)
-    expect(screen.getByText('$0')).toBeInTheDocument()
-    expect(screen.getByText('$3')).toBeInTheDocument()
+    expect(screen.getByText('€0')).toBeInTheDocument()
+    expect(screen.getByText(PRO_MONTHLY_PRICE)).toBeInTheDocument()
   })
 
   it('renders download and upgrade buttons', () => {
     render(<Pricing />)
     expect(screen.getByText('Start free')).toHaveAttribute('href', '/app')
-    expect(screen.getByText('Get Pro — $3/mo')).toHaveAttribute('href', '/upgrade')
+    expect(screen.getByText(`Get Pro — ${PRO_MONTHLY_PRICE}/mo`)).toHaveAttribute('href', '/upgrade')
   })
 
   it('renders feature lists', () => {
     render(<Pricing />)
-    expect(screen.getByText('Unlimited sessions')).toBeInTheDocument()
-    expect(screen.getByText(/Priority support/)).toBeInTheDocument()
+    expect(screen.getByText('Unlimited prompts')).toBeInTheDocument()
+    expect(screen.getByText('Everything in Free')).toBeInTheDocument()
   })
 
-  it('renders Most popular badge on Pro', () => {
+  it('emphasizes the Pro card', () => {
     render(<Pricing />)
-    expect(screen.getByText('Most popular')).toBeInTheDocument()
+    expect(screen.getByText('Pro').closest('.pricing-card')).toHaveClass('featured')
   })
 
   it('renders cancel anytime guarantee', () => {
@@ -43,14 +44,14 @@ describe('Pricing component', () => {
     expect(screen.getByText(/Cancel anytime/)).toBeInTheDocument()
   })
 
-  it('renders the time savings note', () => {
+  it('explains when a paid plan is useful', () => {
     render(<Pricing />)
-    expect(screen.getByText(/40\+ minutes per week/)).toBeInTheDocument()
+    expect(screen.getByText(/Pay only if you hit the daily limit/)).toBeInTheDocument()
   })
 
   it('renders plan descriptions', () => {
     render(<Pricing />)
-    expect(screen.getByText(/bring your own free Groq API key/)).toBeInTheDocument()
-    expect(screen.getByText(/No key management/)).toBeInTheDocument()
+    expect(screen.getByText(/Enough for occasional use/)).toBeInTheDocument()
+    expect(screen.getByText(/For people who prompt every day/)).toBeInTheDocument()
   })
 })

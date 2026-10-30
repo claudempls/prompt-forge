@@ -11,14 +11,13 @@ jest.mock('next/link', () => {
 describe('Hero component', () => {
   it('renders the main headline', () => {
     render(<Hero />)
-    expect(screen.getByText('Better prompts,')).toBeInTheDocument()
-    expect(screen.getByText('before you ask.')).toBeInTheDocument()
+    expect(screen.getByText('Stop rewriting prompts.')).toBeInTheDocument()
+    expect(screen.getByText('Answer a few questions instead.')).toBeInTheDocument()
   })
 
-  it('renders the waitlist form', () => {
+  it('links to the free forge flow', () => {
     render(<Hero />)
-    expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument()
-    expect(screen.getByText('Notify me')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Forge my first prompt/ })).toHaveAttribute('href', '/app')
   })
 
   it('renders the "how it works" link', () => {
@@ -37,7 +36,7 @@ describe('Hero component', () => {
 
   it('renders the eyebrow badge', () => {
     render(<Hero />)
-    expect(screen.getByText(/Free early access opens soon/)).toBeInTheDocument()
+    expect(screen.getByText(/prompts without signup/)).toBeInTheDocument()
   })
 
   it('renders the product mockup window', () => {
