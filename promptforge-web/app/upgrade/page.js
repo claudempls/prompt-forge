@@ -22,12 +22,18 @@ export default function UpgradePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
+  const [interval, setInterval] = useState(YEARLY_CHECKOUT_AVAILABLE ? 'year' : 'month')
+  const yearly = YEARLY_CHECKOUT_AVAILABLE && interval === 'year'
 
   const handleUpgrade = async () => {
     setLoading(true)
     setError(null)
     try {
-      const res = await fetch('/api/stripe/create-checkout', { method: 'POST' })
+      const res = await fetch('/api/stripe/create-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ interval: yearly ? 'year' : 'month' }),
+      })
       const data = await res.json()
 
       if (res.status === 401) {
@@ -66,12 +72,22 @@ export default function UpgradePage() {
           </p>
 
           <div className="upgrade-card">
-            <div className="upgrade-price-row">
-              <span className="upgrade-price">{PRO_MONTHLY_PRICE}</span>
-              <span className="upgrade-price-period">/ month</span>
-            </div>
             {YEARLY_CHECKOUT_AVAILABLE && (
-              <p className="upgrade-sub" style={{ marginTop: 4 }}>or {PRO_YEARLY_PRICE} / year (save 35 %)</p>
+              <div className="upgrade-interval" role="radiogroup" aria-label="Billing period" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
+                {[['month', 'Monthly'], ['year', 'Yearly · save 35 %']].map(([val, label]) => (
+                  <button key={val} type="button" role="radio" aria-checked={interval === val}
+                    className={`btn ${interval === val ? 'btn-primary' : 'btn-ghost'}`}
+                    style={{ minHeight: 44, fontSize: 14, justifyContent: 'center' }}
+                    onClick={() => setInterval(val)}>{label}</button>
+                ))}
+              </div>
+            )}
+            <div className="upgrade-price-row">
+              <span className="upgrade-price">{yearly ? PRO_YEARLY_PRICE : PRO_MONTHLY_PRICE}</span>
+              <span className="upgrade-price-period">{yearly ? '/ year' : '/ month'}</span>
+            </div>
+            {yearly && (
+              <p className="upgrade-sub" style={{ marginTop: 4 }}>That&apos;s €3.25 a month, billed once a year.</p>
             )}
 
             <ul className="upgrade-features">
@@ -99,7 +115,7 @@ export default function UpgradePage() {
                 </>
               ) : (
                 <>
-                  Subscribe — {PRO_MONTHLY_PRICE}/mo
+                  Subscribe — {yearly ? `${PRO_YEARLY_PRICE}/yr` : `${PRO_MONTHLY_PRICE}/mo`}
                   <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                     <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
