@@ -11,3 +11,4 @@ dist-electron/
 .vercel
 .idea/
 .vscode/
+*.tsbuildinfo

@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { generateQuestions, enhancePrompt } from './lib/gemini'
+import { generateQuestions, enhancePrompt } from './lib/groq'
 import { getApiKey, getLanguage } from './lib/store'
-import type { Question } from './lib/gemini'
+import { useT } from './lib/i18n'
+import type { Mode, Question } from './lib/groq'
 
 type QMState = 'idle' | 'loading-questions' | 'questions' | 'loading-result' | 'done' | 'error'
 
@@ -23,6 +24,8 @@ export default function QuickModeApp() {
   const [error, setError] = useState('')
   const [apiKey, setApiKeyState] = useState('')
   const [language, setLanguageState] = useState('English')
+  const [mode, setMode] = useState<Mode>('standard')
+  const t = useT(language)
   const [detectedSource, setDetectedSource] = useState(false) // true = came from active field
 
   const promptRef = useRef<HTMLInputElement>(null)
@@ -56,7 +59,7 @@ export default function QuickModeApp() {
         setTimeout(() => promptRef.current?.focus(), 80)
       }
     })
-  }, [apiKey, language]) // re-register when api key loads
+  }, [apiKey, language, mode]) // re-register when api key loads
 
   function reset() {
     setState('idle')
@@ -75,7 +78,7 @@ export default function QuickModeApp() {
 
     setState('loading-questions')
     try {
-      const qs = await generateQuestions(key, text, lang)
+      const qs = await generateQuestions(key, text, lang, 'auto', mode)
 
       if (qs.length === 0) {
         // No questions needed — forge directly
@@ -101,7 +104,7 @@ export default function QuickModeApp() {
   ) {
     setState('loading-result')
     try {
-      const result = await enhancePrompt(key, text, qs, ans, lang)
+      const result = await enhancePrompt(key, text, qs, ans, lang, 'auto', mode)
       await window.electron.quick.done(result.enhancedPrompt)
       setState('done')
     } catch (e) {
@@ -188,6 +191,18 @@ export default function QuickModeApp() {
             placeholder="Paste or type your prompt…"
             className="flex-1 bg-transparent text-forge-text text-sm placeholder:text-forge-muted/50 focus:outline-none select-text"
           />
+          <select
+            aria-label={t.modeLabel}
+            value={mode}
+            disabled={state !== 'idle'}
+            onChange={(e) => setMode(e.target.value as Mode)}
+            className="no-drag bg-forge-surface text-forge-muted text-xs rounded border border-forge-border"
+          >
+            <option value="lite" title={t.modeLiteDesc}>{t.modeLite}</option>
+            <option value="standard" title={t.modeStandardDesc}>{t.modeStandard}</option>
+            <option value="expert" title={t.modeExpertDesc}>{t.modeExpert}</option>
+            <option value="compact" title={t.modeCompactDesc}>{t.modeCompact}</option>
+          </select>
           {state === 'loading-questions' ? (
             <div className="w-4 h-4 border-2 border-forge-accent/30 border-t-forge-accent rounded-full animate-spin flex-shrink-0" />
           ) : prompt.trim() ? (
