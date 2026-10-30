@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
 import SignOutButton from '@/components/SignOutButton'
+import ManageSubscriptionButton from '@/components/ManageSubscriptionButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -102,6 +103,7 @@ export default async function DashboardPage() {
                   Upgrade to Pro →
                 </a>
               )}
+              {plan === 'pro' && <ManageSubscriptionButton />}
             </div>
 
             <div className="dashboard-card">

@@ -53,14 +53,22 @@ export async function getUsage(request) {
     return { ...context, remaining: Math.max(0, 5 - used), code: 'LIMIT_FREE' }
   }
 
-  // The hosting proxy must replace x-forwarded-for with the client's address.
-  const ip = request.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'unknown'
-  context.ipHash = createHash('sha256').update(ip + process.env.USAGE_SALT).digest('hex')
+  // Anonymous forges are limited per client IP on the server; the cookie is only a secondary key.
+  const ip = clientIp(request)
+  if (!ip && process.env.NODE_ENV === 'production') throw unavailable()
+  context.ipHash = createHash('sha256').update((ip || 'unknown') + process.env.USAGE_SALT).digest('hex')
   const [cookieUsed, ipUsed] = await Promise.all([
     countEvents(admin, 'anon_id', context.anonId),
     countEvents(admin, 'ip_hash', context.ipHash),
   ])
   return { ...context, remaining: Math.max(0, 2 - Math.max(cookieUsed, ipUsed)), code: 'LIMIT_ANON' }
+}
+
+// Prefer headers set by the hosting edge (Vercel), which clients cannot spoof.
+export function clientIp(request) {
+  const h = request.headers
+  const raw = h.get('x-vercel-forwarded-for') || h.get('x-real-ip') || h.get('x-forwarded-for') || ''
+  return raw.split(',')[0].trim() || null
 }
 
 function limitError(code) {

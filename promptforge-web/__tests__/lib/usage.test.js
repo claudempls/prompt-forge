@@ -146,3 +146,10 @@ test('missing service credentials fails open in development, closed in productio
   await expect(assertCanForge(request())).rejects.toMatchObject({ status: 503 })
   warn.mockRestore()
 })
+
+test('anonymous limit keys on client IP even with a fresh cookie', async () => {
+  const { clientIp } = await import('@/lib/usage')
+  expect(clientIp({ headers: new Headers({ 'x-vercel-forwarded-for': '198.51.100.7', 'x-forwarded-for': '1.2.3.4' }) })).toBe('198.51.100.7')
+  expect(clientIp({ headers: new Headers({ 'x-forwarded-for': '203.0.113.1, 10.0.0.1' }) })).toBe('203.0.113.1')
+  expect(clientIp({ headers: new Headers() })).toBeNull()
+})
