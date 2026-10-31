@@ -172,10 +172,11 @@ function registerShortcut(): void {
 }
 
 app.whenReady().then(() => {
-  // Ensure API key is always pre-configured for users
+  // API key comes from the app settings (store) or the GROQ_API_KEY env var, never from source.
   const s = readStore()
-  if (!s['apiKey']) {
-    s['apiKey'] = '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'
+  const envKey = process.env.GROQ_API_KEY?.trim()
+  if (!s['apiKey'] && envKey) {
+    s['apiKey'] = envKey
     if (!s['plan']) s['plan'] = 'free'
     writeStore(s)
   }
