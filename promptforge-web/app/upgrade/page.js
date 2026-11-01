@@ -1,5 +1,6 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import Footer from '@/components/Footer'
@@ -21,6 +22,12 @@ const CheckIcon = () => (
 export default function UpgradePage() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
+  const [loggedIn, setLoggedIn] = useState(false)
+
+  useEffect(() => {
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) return
+    createClient().auth.getSession().then(({ data }) => setLoggedIn(!!data.session))
+  }, [])
   const [error, setError] = useState(null)
   const [interval, setInterval] = useState(YEARLY_CHECKOUT_AVAILABLE ? 'year' : 'month')
   const yearly = YEARLY_CHECKOUT_AVAILABLE && interval === 'year'
@@ -131,7 +138,11 @@ export default function UpgradePage() {
             </p>
           </div>
 
-          <a href="/dashboard" className="upgrade-back">← Back to Dashboard</a>
+          {loggedIn ? (
+            <a href="/dashboard" className="upgrade-back">← Back to Dashboard</a>
+          ) : (
+            <a href="/" className="upgrade-back">← Back</a>
+          )}
         </div>
       </main>
       <Footer />

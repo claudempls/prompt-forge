@@ -1889,7 +1889,7 @@ details[open] .faq-chevron { transform: rotate(180deg); }
   border: 1px solid var(--border-hi);
   border-radius: 16px;
   color: var(--text);
-  font-size: 15px;
+  font-size: 16px;
   line-height: 1.6;
   padding: 16px 18px;
   resize: none;
@@ -2609,3 +2609,16 @@ html.lenis, html.lenis body { height: auto; }
   nav { padding-inline: 12px; }
   .nav-logo { gap: 5px; font-size: 18px; }
 }
+
+/* ---- Tap targets & header (Tester round 1) ---- */
+.forge-mode-btn { min-height: 44px; }
+.forge-example-chip { min-height: 44px; display: inline-flex; align-items: center; }
+.auth-link { min-height: 44px; display: inline-flex; align-items: center; }
+.auth-terms-link { display: inline-flex; align-items: center; min-height: 44px; }
+.upgrade-back { min-height: 44px; display: inline-flex; align-items: center; }
+.legal-back { min-height: 44px; display: flex; width: fit-content; align-items: center; margin-bottom: 20px; }
+.legal-back { margin-bottom: 28px; }
+@media (min-width: 769px) {
+  .nav-account-icon { display: none; }
+}
+.legal-page { padding-top: 48px; }
