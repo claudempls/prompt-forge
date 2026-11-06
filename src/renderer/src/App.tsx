@@ -10,7 +10,7 @@ import SettingsPage from './pages/SettingsPage'
 import Sidebar from './components/Sidebar'
 import { isSetupDone, getLanguage, getApiKey } from './lib/store'
 import { supabase } from './lib/supabase'
-import type { Question, EnhanceResult, Category, Mode } from './lib/gemini'
+import type { Question, EnhanceResult, Category, Mode } from './lib/groq'
 
 export type NavTab = 'forge' | 'history' | 'personalization' | 'settings'
 export type ForgeScreen = 'home' | 'questions' | 'result'

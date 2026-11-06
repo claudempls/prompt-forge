@@ -1,3 +1,4 @@
+import { GROQ_MODEL } from '@shared/prompts'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -16,7 +17,7 @@ export async function POST(request) {
       user_id: user.id,
       original_prompt,
       enhanced_prompt: refined_prompt,
-      model_used: `groq/llama-3.3-70b-versatile | ${original_score}→${refined_score} | ${improvement_note ?? ''}`,
+      model_used: `groq/${process.env.GROQ_MODEL || GROQ_MODEL} | ${original_score}→${refined_score} | ${improvement_note ?? ''}`,
     })
 
     if (error) throw error

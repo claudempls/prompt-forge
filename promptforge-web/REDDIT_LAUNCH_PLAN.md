@@ -1,59 +1,88 @@
-# PromptForge Reddit launch plan
+# PromptForge – Reddit launch plan (v2)
 
-Generated: August 30, 2026
+Původní verze: 30. 8. 2026 · Revize: Marketer, 30. 10. 2026
+**Stav: NIC NEPOSTOVAT.** Každý post schvaluje Claude zvlášť.
 
-Goal: drive launch traffic to PromptForge with a low-friction email CTA, while reducing removal risk by posting useful, disclosed, subreddit-specific content instead of repeating one ad.
+## Co se změnilo proti v1 a proč
+1. **Cíl není e-mail, ale aktivace.** Web `/app` už funguje, takže posty vedou na vyzkoušení (1. forge), ne na waitlist. Waitlist zůstává jen pro macOS appku.
+2. **Místo 50 subredditů 3 vlny po 4–6 postech** s kill/scale kritérii. 50 postů z jednoho účtu = shadowban a nulová data.
+3. **UTM na každý odkaz** (`?utm_source=reddit&utm_campaign=launch1&utm_content=<subreddit>`), jinak nejde poznat, co funguje.
+4. **Žádná nepravdivá tvrzení.** Neslibovat vlastní klíče OpenAI/Anthropic/Gemini ani „no account needed“ (viz `COPY-AUDIT.md`).
+5. **Validace placení**, ne jen zájmu: v komentářích testovat, za co by lidi zaplatili (Pro 3 USD/měs. je skoro neviditelná cena, otázka je, jestli platí vůbec někdo).
+
+## Blokery před 1. postem (go/no-go)
+- [ ] Web běží na produkční doméně a doména `promptforge.ai` je ověřeně naše (jinak všechny odkazy změnit).
+- [ ] Opravená copy podle `COPY-AUDIT.md` (body 1–4).
+- [ ] Analytika + ukládání `utm_source` u waitlistu a u registrace.
+- [ ] `/app` prošlo mobilní kontrolou 375×812 (většina Reddit provozu je z mobilu).
+- [ ] Ideálně 1–2 forge bez přihlášení. Pokud ne, v postu férově napsat „needs Google sign-in“.
+- [ ] Reddit účet s historií a karmou (nový účet = automatické smazání v polovině subů).
 
 ## Ground rules
+1. Žádný copy-paste textu. Úvod vždy na míru subredditu.
+2. Vždy otevřeně: „I'm building PromptForge.“
+3. Hodnota nejdřív, odkaz na konci (nebo jen v komentáři, kde to sub vyžaduje).
+4. Self-promo jen v určených vláknech, kde to sub chce.
+5. Max 1 post denně, odpovídat na každý komentář do 2 hodin.
+6. Žádné alt účty ani domluvené upvoty.
 
-1. Do not mass-post the same text. Rewrite the opener for each subreddit.
-2. Disclose clearly: "I am building PromptForge".
-3. Put the link near the end unless the subreddit explicitly allows direct launches.
-4. Use the right thread where required, especially self-promotion and monthly launch threads.
-5. Start with 8 to 12 highest-fit subreddits, then expand after seeing what gets approved.
-6. Never ask friends or alt accounts to fake engagement. Some communities explicitly ban coordinated shilling.
-7. Check each sidebar again on posting day. Rules change.
+## Vlny a rozhodovací pravidla
 
-## Core post
+**Vlna 1 – feedback od builderů (týden 1):** r/SideProject, r/alphaandbetausers, r/IMadeThis, r/indiehackers, r/microsaas.
+**Vlna 2 – power users promptů (týden 2):** r/PromptEngineering, r/ChatGPTPromptGenius, r/ChatGPTCoding (weekly thread), r/AIToolsAndTips (po schválení modů), r/LocalLLaMA (jen technický post: proč Llama 3.3 70B na Groqu).
+**Vlna 3 – use-case komunity (týden 3+):** r/copywriting, r/SEO, r/ProductManagement, r/nocode, r/n8n. Jen s konkrétním příkladem prompt před/po z jejich oboru.
+
+**Pokračovat do další vlny, když vlna splní aspoň 2 ze 3:**
+- ≥ 150 unikátních návštěv z Redditu,
+- ≥ 25 % návštěv dokončí 1. forge,
+- ≥ 10 komentářů s konkrétní zpětnou vazbou (ne „nice“).
+
+**Zastavit a předělat positioning, když:** aktivace < 10 % nebo převládá námitka „ChatGPT to umí sám“. Pak upravit hero a otestovat znovu v jiné komunitě, ne přidávat další suby.
+
+## Core post (vlna 1)
 
 Title:
 
 ```text
-I am building a free tool that rewrites rough ideas into stronger AI prompts. What would make it actually useful?
+I built a tool that asks you 3 questions before rewriting your prompt. Is that actually better than "improve this prompt"?
 ```
 
 Body:
 
 ```text
-I am building PromptForge, a small free early-access tool for turning rough ideas into better prompts for ChatGPT, Claude, Gemini, and local LLMs.
+I'm building PromptForge. You paste a rough prompt ("write a cold email"), it asks a few quick multiple-choice questions (audience, format, constraints), then rewrites it and shows a before/after quality score.
 
-The first version focuses on three things:
+Why: when I ask ChatGPT to "improve my prompt", it guesses the missing context. I wanted the tool to ask instead.
 
-1. Rewrite a messy prompt into a clearer one.
-2. Show what context is missing before you waste a model response.
-3. Give reusable prompt structures for common workflows like writing, research, coding, SEO, and planning.
+What's live: web version, 5 free prompts/day (Google sign-in). A macOS app with a global shortcut (Option+Space, rewrites the text field you're in) is coming.
 
-I am not trying to pitch a finished product as if it is already huge. I am trying to validate whether this solves a real annoyance for people who use AI often.
+Honest questions:
+1. Do the questions feel useful, or like friction?
+2. What prompt do you rewrite most often?
 
-If you have 30 seconds, I would love blunt feedback:
-
-What is the one prompt-related problem that still wastes your time?
-
-Early-access page: https://promptforge.ai
-Disclosure: I am the builder.
+Link: https://promptforge.ai/app?utm_source=reddit&utm_campaign=launch1&utm_content=sideproject
+Disclosure: I'm the builder.
 ```
+
+## Value-first post (vlna 2, r/PromptEngineering a spol.)
+
+Title:
+
+```text
+The 6 things missing from most prompts I've seen (checklist from building a prompt rewriter)
+```
+
+Body: checklist (audience, goal, format, length, constraints, example) se 2 reálnými před/po ukázkami z hero dema. Odkaz jen v posledním řádku nebo v komentáři: „I turned this checklist into a tool, link if anyone wants it.“
 
 ## Short comment version
 
 ```text
-Disclosure: I am building PromptForge, a free early-access prompt rewriting and scoring tool.
-
-Relevant because this thread is about getting better AI output: the main thing I am testing is whether people want a quick "what is missing from this prompt?" step before they paste into ChatGPT or Claude.
-
-Would be useful to hear what you currently do when a prompt keeps producing vague output.
+Disclosure: I'm building PromptForge. The approach I'm testing: instead of rewriting your prompt blindly, it asks 2–3 questions about what's missing first. Curious what you do when a prompt keeps giving vague output?
 ```
 
-## 50 subreddit targets
+## Backlog: 50 subredditů (nepostovat najednou)
+
+Tabulka zůstává jako zásobník. Postuje se jen podle vln níže. Pravidla každého subu ověřit v den postu.
 
 | # | Subreddit | Priority | Safer post type | Suggested title or angle |
 |---:|---|---|---|---|
@@ -112,24 +141,13 @@ Would be useful to hear what you currently do when a prompt keeps producing vagu
 
 Use these only after the first batch: r/productivity, r/webdev, r/web_design, r/learnprogramming, r/software, r/devops, r/sysadmin, r/PPC, r/SocialMediaMarketing, r/solopreneur.
 
-## Posting order
-
-1. r/SideProject
-2. r/PromptEngineering
-3. r/ChatGPTPromptGenius
-4. r/SaaS
-5. r/microsaas
-6. r/alphaandbetausers
-7. r/indiehackers
-8. r/nocode
-9. r/ChatGPTCoding weekly thread
-10. r/AIToolsAndTips after checking mod approval
-
-## Tracking sheet columns
+## Tracking (Google Sheet, 1 řádek na post)
 
 ```text
-Date, Subreddit, Post URL, Title, Post type, Approved, Upvotes, Comments, Visits, Emails, Notes, Follow-up needed
+Date, Subreddit, Wave, Post URL, Post type, Approved/Removed, Upvotes, Comments, Visits (utm), First forges, Sign-ins, Mac waitlist, Pro upgrades, Top objection, Next action
 ```
+
+Klíčové poměry: Visits → First forge (aktivace), First forge → návrat do 7 dnů (retence), komentáře s námitkou „ChatGPT umí sám“ (positioning).
 
 ## Sources checked
 

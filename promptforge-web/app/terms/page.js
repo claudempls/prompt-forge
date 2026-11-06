@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Nav from '@/components/Nav'
 
 const sections = [
   {
@@ -30,6 +31,8 @@ export const metadata = {
 
 export default function TermsPage() {
   return (
+    <div className="wrap">
+    <Nav />
     <main className="legal-page">
       <div className="legal-inner">
         <Link href="/" className="legal-back">Back to PromptForge</Link>
@@ -46,5 +49,6 @@ export default function TermsPage() {
         </div>
       </div>
     </main>
+    </div>
   )
 }

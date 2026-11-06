@@ -20,12 +20,12 @@ const inter = Inter({
 
 export const metadata = {
   metadataBase: new URL('https://promptforge.ai'),
-  title: 'PromptForge | Better prompts before you waste the next AI response',
+  title: 'PromptForge – turn rough ideas into precise AI prompts',
   description:
-    'PromptForge turns rough ideas into structured prompts, catches missing context, and gives you cleaner instructions for ChatGPT, Claude, Gemini, Groq, and local LLMs.',
+    'Paste a rough idea, answer a few quick questions, get a precise prompt for ChatGPT, Claude, Gemini or local LLMs. Free to try, no signup.',
   openGraph: {
     title: 'PromptForge',
-    description: 'Free early access for a prompt rewriting and scoring tool.',
+    description: 'Answer a few questions, get a precise AI prompt. Free to try, no signup.',
     url: 'https://promptforge.ai',
     siteName: 'PromptForge',
     images: [
@@ -40,7 +40,7 @@ export const metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'PromptForge',
-    description: 'Better prompts before you waste the next AI response.',
+    description: 'Answer a few questions, get a precise AI prompt. Free to try, no signup.',
     images: ['/promptforge-hero.png'],
   },
 }

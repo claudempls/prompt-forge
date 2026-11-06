@@ -1,8 +1,8 @@
 
 import { useState, useEffect, useRef } from 'react'
 import type { AppState } from '../App'
-import type { Category, Mode } from '../lib/gemini'
-import { generateQuestions, enhancePrompt } from '../lib/gemini'
+import type { Category, Mode } from '../lib/groq'
+import { generateQuestions, enhancePrompt } from '../lib/groq'
 import { useT, detectLanguage } from '../lib/i18n'
 import { setLanguage } from '../lib/store'
 
@@ -58,9 +58,10 @@ export default function HomePage({ state, update }: Props) {
   ]
 
   const MODES: { id: Mode; label: string; desc: string }[] = [
-    { id: 'lite',     label: 'Lite',     desc: 'Instant enhance, no questions' },
-    { id: 'standard', label: 'Standard', desc: '3–5 targeted questions' },
-    { id: 'expert',   label: 'Expert',   desc: '6–8 deep questions' },
+    { id: 'lite',     label: t.modeLite,     desc: t.modeLiteDesc },
+    { id: 'standard', label: t.modeStandard, desc: t.modeStandardDesc },
+    { id: 'expert',   label: t.modeExpert,   desc: t.modeExpertDesc },
+    { id: 'compact',  label: t.modeCompact,  desc: t.modeCompactDesc },
   ]
 
   async function handleStart() {
@@ -72,7 +73,7 @@ export default function HomePage({ state, update }: Props) {
       const questions = await generateQuestions(state.apiKey, trimmed, state.language, selectedCategory, selectedMode)
 
       if (questions.length === 0) {
-        // Lite mode or prompt needs no clarification — enhance directly
+        // Lite/Compact mode or prompt needs no clarification — enhance directly
         const result = await enhancePrompt(state.apiKey, trimmed, [], {}, state.language, selectedCategory, selectedMode)
         update({ forgeScreen: 'result', originalPrompt: trimmed, questions: [], answers: {}, result })
       } else {

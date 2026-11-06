@@ -3,7 +3,10 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
-export async function POST() {
+export async function POST(request) {
+  const body = await request?.json?.().catch(() => ({})) ?? {}
+  const yearly = body?.interval === 'year'
+  const priceId = yearly ? process.env.STRIPE_PRO_YEARLY_PRICE_ID : process.env.STRIPE_PRO_PRICE_ID
   const supabase = createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
@@ -11,7 +14,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
   }
 
-  if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_PRO_PRICE_ID) {
+  if (!process.env.STRIPE_SECRET_KEY || !priceId) {
     return NextResponse.json({ error: 'Stripe is not configured.' }, { status: 500 })
   }
 
@@ -49,7 +52,7 @@ export async function POST() {
   const session = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
-    line_items: [{ price: process.env.STRIPE_PRO_PRICE_ID, quantity: 1 }],
+    line_items: [{ price: priceId, quantity: 1 }],
     success_url: `${baseUrl}/upgrade/success?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${baseUrl}/upgrade`,
     metadata: { supabase_user_id: user.id },
