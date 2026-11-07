@@ -36,10 +36,10 @@ describe('Nav component', () => {
     expect(screen.getByText('Forge')).toBeInTheDocument()
   })
 
-  it('shows Sign in and Join waitlist when no user is logged in', () => {
+  it('shows Sign in and Try free when no user is logged in', () => {
     render(<Nav />)
     expect(screen.getByText('Sign in')).toBeInTheDocument()
-    expect(screen.getByText('Join waitlist')).toBeInTheDocument()
+    expect(screen.getByText('Try free')).toBeInTheDocument()
   })
 
   it('logo links to home page', () => {

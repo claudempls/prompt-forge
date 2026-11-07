@@ -41,15 +41,15 @@ export default function WaitlistForm({ compact = false }) {
           required
         />
         <button className="btn btn-primary waitlist-submit" type="submit" disabled={status === 'loading'}>
-          {status === 'loading' ? 'Joining...' : 'Notify me'}
+          {status === 'loading' ? 'Joining...' : 'Email me the Mac app'}
         </button>
       </div>
       <p className={`waitlist-note waitlist-note-${status}`}>
         {status === 'success'
-          ? 'You are on the launch list.'
+          ? 'Done. One email when the Mac app ships.'
           : status === 'error'
             ? 'Something went wrong. Try again in a moment.'
-            : 'One launch email. No spam, no account needed.'}
+            : 'One email at launch. Nothing else.'}
       </p>
     </form>
   )

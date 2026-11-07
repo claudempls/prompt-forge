@@ -13,7 +13,8 @@ export default defineConfig({
     cacheDir: resolve('out/.vite-cache'),
     resolve: {
       alias: {
-        '@renderer': resolve('src/renderer/src')
+        '@renderer': resolve('src/renderer/src'),
+        '@shared': resolve('shared')
       }
     },
     plugins: [react()]

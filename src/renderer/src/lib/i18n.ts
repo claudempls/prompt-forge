@@ -23,6 +23,16 @@ export interface T {
   homeImprove: string
   homeTryExample: string
   homeWriteFirst: string
+  // Modes
+  modeLite: string
+  modeLiteDesc: string
+  modeStandard: string
+  modeStandardDesc: string
+  modeExpert: string
+  modeExpertDesc: string
+  modeCompact: string
+  modeCompactDesc: string
+  modeLabel: string
   // Category labels
   catAuto: string
   catCode: string
@@ -98,6 +108,16 @@ export interface T {
 
 const TRANSLATIONS: Record<LangCode, T> = {
   en: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: 'Improve your prompt',
     homeSubtitle: 'Paste any rough idea — PromptForge asks a few smart questions and transforms it into something precise.',
     homePlaceholder: 'Describe what you want to build, write, or create…',
@@ -136,6 +156,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: 'Cancel subscription →', cmAlreadyCancelled: 'Already cancelled — switch to Free', cmKeepPro: 'Keep Pro',
   },
   cs: {
+    modeLite: 'Lehký',
+    modeLiteDesc: 'Okamžité vylepšení bez otázek',
+    modeStandard: 'Standardní',
+    modeStandardDesc: '3–5 cílených otázek',
+    modeExpert: 'Expertní',
+    modeExpertDesc: '6–10 podrobných otázek',
+    modeCompact: 'Kompaktní',
+    modeCompactDesc: 'Úsporný prompt v čínštině bez otázek; odpovědi ve tvém jazyce',
+    modeLabel: 'Režim',
+
     homeTitle: 'Vylepši svůj prompt',
     homeSubtitle: 'Vlož libovolný nápad — PromptForge položí pár chytrých otázek a převede ho na přesný prompt.',
     homePlaceholder: 'Popiš, co chceš vytvořit, napsat nebo sestavit…',
@@ -174,6 +204,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: 'Zrušit předplatné →', cmAlreadyCancelled: 'Již zrušeno — přejít na Free', cmKeepPro: 'Zachovat Pro',
   },
   zh: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: '优化你的提示词',
     homeSubtitle: '粘贴任何粗糙的想法——PromptForge 会提几个智能问题，将其转化为精准的提示词。',
     homePlaceholder: '描述你想构建、撰写或创作的内容…',
@@ -212,6 +252,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: '取消订阅 →', cmAlreadyCancelled: '已取消 — 切换到免费版', cmKeepPro: '保留 Pro',
   },
   es: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: 'Mejora tu prompt',
     homeSubtitle: 'Pega cualquier idea — PromptForge hace algunas preguntas inteligentes y la transforma en algo preciso.',
     homePlaceholder: 'Describe lo que quieres construir, escribir o crear…',
@@ -250,6 +300,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: 'Cancelar suscripción →', cmAlreadyCancelled: 'Ya cancelé — cambiar a gratuito', cmKeepPro: 'Mantener Pro',
   },
   de: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: 'Verbessere deinen Prompt',
     homeSubtitle: 'Füge eine grobe Idee ein — PromptForge stellt smarte Fragen und verwandelt sie in etwas Präzises.',
     homePlaceholder: 'Beschreibe, was du bauen, schreiben oder erstellen möchtest…',
@@ -288,6 +348,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: 'Abonnement kündigen →', cmAlreadyCancelled: 'Bereits gekündigt — zu Free wechseln', cmKeepPro: 'Pro behalten',
   },
   fr: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: 'Améliorez votre prompt',
     homeSubtitle: "Collez n'importe quelle idée — PromptForge pose quelques questions intelligentes et la transforme en quelque chose de précis.",
     homePlaceholder: 'Décrivez ce que vous voulez créer, écrire ou construire…',
@@ -326,6 +396,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: "Annuler l'abonnement →", cmAlreadyCancelled: 'Déjà annulé — passer à gratuit', cmKeepPro: 'Garder Pro',
   },
   it: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: 'Migliora il tuo prompt',
     homeSubtitle: 'Incolla qualsiasi idea — PromptForge farà alcune domande intelligenti e la trasformerà in qualcosa di preciso.',
     homePlaceholder: 'Descrivi cosa vuoi creare, scrivere o costruire…',
@@ -364,6 +444,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: 'Annulla abbonamento →', cmAlreadyCancelled: 'Già annullato — passa a gratuito', cmKeepPro: 'Mantieni Pro',
   },
   pt: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: 'Melhore seu prompt',
     homeSubtitle: 'Cole qualquer ideia — PromptForge faz algumas perguntas inteligentes e a transforma em algo preciso.',
     homePlaceholder: 'Descreva o que você quer construir, escrever ou criar…',
@@ -402,6 +492,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: 'Cancelar assinatura →', cmAlreadyCancelled: 'Já cancelado — mudar para gratuito', cmKeepPro: 'Manter Pro',
   },
   pl: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: 'Ulepsz swój prompt',
     homeSubtitle: 'Wklej dowolny pomysł — PromptForge zadaje kilka sprytnych pytań i przekształca go w coś precyzyjnego.',
     homePlaceholder: 'Opisz, co chcesz zbudować, napisać lub stworzyć…',
@@ -440,6 +540,16 @@ const TRANSLATIONS: Record<LangCode, T> = {
     cmCancel: 'Anuluj subskrypcję →', cmAlreadyCancelled: 'Już anulowano — przejdź na Free', cmKeepPro: 'Zachowaj Pro',
   },
   ja: {
+    modeLite: 'Lite',
+    modeLiteDesc: 'Instant polish, no questions',
+    modeStandard: 'Standard',
+    modeStandardDesc: '3–5 targeted questions',
+    modeExpert: 'Expert',
+    modeExpertDesc: '6–10 deep questions',
+    modeCompact: 'Compact',
+    modeCompactDesc: 'Dense Chinese prompt, no questions; replies in your language',
+    modeLabel: 'Mode',
+
     homeTitle: 'プロンプトを改善する',
     homeSubtitle: 'アイデアを貼り付けると、PromptForgeがいくつかの質問をして正確なプロンプトに変換します。',
     homePlaceholder: '作りたい、書きたい、または作成したいことを説明してください…',

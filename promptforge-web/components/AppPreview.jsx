@@ -152,7 +152,9 @@ export default function AppPreview() {
 
         <AnimateIn delay={80}>
           <div className="hero-mockup">
-            <div className="mockup-glow" aria-hidden="true" />
+            <div className="decoration-layer" aria-hidden="true">
+              <div className="mockup-glow" />
+            </div>
             <div className="mockup-window">
 
               {/* Title bar */}

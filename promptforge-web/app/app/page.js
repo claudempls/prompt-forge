@@ -4,6 +4,33 @@ import { useRouter } from 'next/navigation'
 import Nav from '@/components/Nav'
 import { createClient } from '@/lib/supabase/client'
 
+// Bound both authentication and API work, including reading the response body.
+async function withTimeout(work) {
+  const controller = new AbortController()
+  let timer
+  try {
+    return await Promise.race([
+      Promise.resolve().then(() => work(controller.signal)),
+      new Promise((_, reject) => {
+        timer = setTimeout(() => {
+          reject(new Error('Loading took too long. Please try again.'))
+          controller.abort()
+        }, 8000)
+      }),
+    ])
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
+function requestJson(url, options) {
+  return withTimeout(async (signal) => {
+    const res = await fetch(url, { ...options, signal })
+    const data = await res.json()
+    return { res, data }
+  })
+}
+
 const STEPS = {
   INPUT: 'input',
   LOADING_Q: 'loading_q',
@@ -45,7 +72,11 @@ export default function AppPage() {
 
   const [user, setUser] = useState(undefined) // undefined = loading
   const [plan, setPlan] = useState(null)
-  const [usedToday, setUsedToday] = useState(0)
+  const [authLoading, setAuthLoading] = useState(true)
+  const [authError, setAuthError] = useState(null)
+  const [authAttempt, setAuthAttempt] = useState(0)
+  const [remaining, setRemaining] = useState(null)
+  const [anonLimited, setAnonLimited] = useState(false)
   const [step, setStep] = useState(STEPS.INPUT)
   const [roughPrompt, setRoughPrompt] = useState('')
   const [questions, setQuestions] = useState([])
@@ -58,34 +89,52 @@ export default function AppPage() {
   const [copied, setCopied] = useState(false)
   const [selectedMode, setSelectedMode] = useState('auto')
 
-  // Load auth + plan on mount
+  // Read the initial session explicitly; auth events alone may never arrive.
   useEffect(() => {
-    const fetchPlan = async (u) => {
-      if (!u) { setPlan(null); return }
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('plan')
-        .eq('id', u.id)
-        .maybeSingle()
-      setPlan(profile?.plan ?? 'free')
+    let active = true
+    let revision = 0
+    setAuthLoading(true)
+    setAuthError(null)
 
-      const todayStart = new Date()
-      todayStart.setHours(0, 0, 0, 0)
-      const { count } = await supabase
-        .from('prompt_history')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', u.id)
-        .gte('created_at', todayStart.toISOString())
-      setUsedToday(count ?? 0)
+    const load = async (getUser) => {
+      const current = ++revision
+      try {
+        const state = await withTimeout(async () => {
+          const u = await getUser()
+          const { res, data: usage } = await requestJson('/api/usage')
+          if (!res.ok) throw new Error(usage.error || 'Unable to load usage.')
+          if (!u) return { user: null, plan: null, remaining: usage.remaining }
+          const { data: profile, error: profileError } = await supabase
+            .from('profiles').select('plan').eq('id', u.id).maybeSingle()
+          if (profileError) throw profileError
+          return { user: u, plan: profile?.plan ?? 'free', remaining: usage.remaining }
+        })
+        if (!active || current !== revision) return
+        setUser(state.user)
+        setPlan(state.plan)
+        setRemaining(state.remaining)
+        setAnonLimited(false)
+        setAuthError(null)
+      } catch (e) {
+        if (active && current === revision) setAuthError(e.message || 'Unable to load the editor.')
+      } finally {
+        if (active && current === revision) setAuthLoading(false)
+      }
     }
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
-      const u = session?.user ?? null
-      setUser(u)
-      fetchPlan(u)
+    load(async () => {
+      const { data, error: sessionError } = await supabase.auth.getUser()
+      if (sessionError && sessionError.name !== 'AuthSessionMissingError') throw sessionError
+      return data?.user ?? null
     })
-    return () => subscription.unsubscribe()
-  }, [])
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      // Run database queries after the auth callback releases Supabase's lock.
+      queueMicrotask(() => {
+        if (active) load(() => session?.user ?? null)
+      })
+    })
+    return () => { active = false; subscription.unsubscribe() }
+  }, [supabase, authAttempt])
 
   // Keyboard shortcuts for question options
   useEffect(() => {
@@ -110,18 +159,17 @@ export default function AppPage() {
     if (mode === 'lite' || mode === 'compact') {
       setStep(STEPS.LOADING_R)
       try {
-        const res = await fetch('/api/refine', {
+        const { res, data } = await requestJson('/api/refine', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt: cleanPrompt, questions: [], answers: [], mode }),
         })
-        const data = await res.json()
-        if (res.status === 401) { router.push('/login?next=/app'); return }
-        if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setStep(STEPS.INPUT); return }
+        if (res.status === 401) { setStep(STEPS.INPUT); setUser(null); router.push('/login?next=/app'); return }
+        if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setRemaining(data.remaining); setAnonLimited(data.code === 'LIMIT_ANON'); setStep(STEPS.INPUT); return }
         if (!res.ok) throw new Error(data.error || 'Failed to refine prompt')
         setResult(data)
         setStep(STEPS.RESULT)
-        setUsedToday(prev => prev + 1)
+        setRemaining(data.remaining)
         if (user) {
           await supabase.from('prompt_history').insert({
             user_id: user.id,
@@ -140,15 +188,15 @@ export default function AppPage() {
 
     setStep(STEPS.LOADING_Q)
     try {
-      const res = await fetch('/api/questions', {
+      const { res, data } = await requestJson('/api/questions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompt: cleanPrompt, mode }),
       })
-      const data = await res.json()
-      if (res.status === 401) { router.push('/login?next=/app'); return }
-      if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setStep(STEPS.INPUT); return }
+      if (res.status === 401) { setStep(STEPS.INPUT); setUser(null); router.push('/login?next=/app'); return }
+      if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setRemaining(data.remaining); setAnonLimited(data.code === 'LIMIT_ANON'); setStep(STEPS.INPUT); return }
       if (!res.ok) throw new Error(data.error || 'Failed to generate questions')
+      setRemaining(data.remaining)
       setQuestions(data.questions)
       setAnswers([])
       setCurrentQ(0)
@@ -177,7 +225,7 @@ export default function AppPage() {
     const mode = prefixMode !== 'auto' ? prefixMode : selectedMode
     const cleanPrompt = stripModePrefix(roughPrompt)
     try {
-      const res = await fetch('/api/refine', {
+      const { res, data } = await requestJson('/api/refine', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -187,15 +235,14 @@ export default function AppPage() {
           mode,
         }),
       })
-      const data = await res.json()
 
-      if (res.status === 401) { router.push('/login?next=/app'); return }
-      if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setStep(STEPS.INPUT); return }
+      if (res.status === 401) { setStep(STEPS.INPUT); setUser(null); router.push('/login?next=/app'); return }
+      if (res.status === 403) { setError(data.error || 'Daily limit reached.'); setRemaining(data.remaining); setAnonLimited(data.code === 'LIMIT_ANON'); setStep(STEPS.INPUT); return }
       if (!res.ok) throw new Error(data.error || 'Failed to refine prompt')
 
       setResult(data)
       setStep(STEPS.RESULT)
-      setUsedToday(prev => prev + 1)
+      setRemaining(data.remaining)
 
       // Save to history
       if (user) {
@@ -234,38 +281,33 @@ export default function AppPage() {
   }
 
   // ── Auth loading ──────────────────────────────────────────────────────────────
-  if (user === undefined) {
+  if (authError) {
     return (
       <div className="wrap">
         <Nav />
         <main className="forge-main">
-          <div className="forge-step forge-loading-step">
-            <div className="forge-spinner" />
+          <div className="forge-step" role="alert">
+            <h1 className="forge-title">Unable to load editor</h1>
+            <p className="forge-sub">{authError}</p>
+            <button className="btn btn-primary forge-retry" onClick={() => {
+              setAuthError(null)
+              setAuthLoading(true)
+              setAuthAttempt(attempt => attempt + 1)
+            }}>Try again</button>
           </div>
         </main>
       </div>
     )
   }
 
-  // ── Not logged in ─────────────────────────────────────────────────────────────
-  if (!user) {
+  if (authLoading) {
     return (
       <div className="wrap">
         <Nav />
         <main className="forge-main">
-          <div className="forge-step forge-gate">
-            <div className="forge-eyebrow">
-              <span className="hero-eyebrow-dot" />
-              PromptForge Web
-            </div>
-            <h1 className="forge-title">Sign in to<br /><em>start forging</em></h1>
-            <p className="forge-sub">Create an account and subscribe to start transforming your prompts.</p>
-            <a href="/login" className="btn btn-primary btn-lg forge-submit">
-              Sign in with Google
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <path d="M3 7h8M7 3l4 4-4 4" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </a>
+          <div className="forge-step forge-loading-step" role="status">
+            <div className="forge-spinner" aria-hidden="true" />
+            <p className="forge-loading-text">Loading editor…</p>
           </div>
         </main>
       </div>
@@ -287,28 +329,41 @@ export default function AppPage() {
             </div>
             <h1 className="forge-title">What do you want<br /><em>to create?</em></h1>
             <p className="forge-sub">
-              Paste any rough prompt. We'll ask a few smart questions and return something far more precise.
+              {!user ? 'Try 2 forges free, no sign-up. ' : ''}Paste any rough prompt. We'll ask a few smart questions and return something far more precise.
             </p>
 
-            {plan === 'free' && (
+            {!user && remaining !== null && (
+              <p className="forge-usage-label">{remaining} free tries left — sign in for 5/day</p>
+            )}
+
+            {plan === 'free' && remaining !== null && (
               <div className="forge-usage-bar-wrap">
                 <span className="forge-usage-label">
-                  {usedToday >= 5
+                  {remaining === 0
                     ? <>Daily limit reached · <a href="/upgrade" style={{ color: 'var(--accent)' }}>Upgrade to Pro</a></>
-                    : <>{5 - usedToday} forge{5 - usedToday !== 1 ? 's' : ''} remaining today</>
+                    : <>{remaining} forge{remaining !== 1 ? 's' : ''} remaining today</>
                   }
                 </span>
                 <div className="forge-usage-track">
-                  <div className="forge-usage-fill" style={{ width: `${Math.min((usedToday / 5) * 100, 100)}%` }} />
+                  <div className="forge-usage-fill" style={{ width: `${Math.min(((5 - remaining) / 5) * 100, 100)}%` }} />
                 </div>
               </div>
             )}
 
             {error && (
-              <div className="auth-error" style={{ maxWidth: '560px', width: '100%' }}>
+              <div role="alert" className="auth-error" style={{ maxWidth: '560px', width: '100%' }}>
                 {error.includes('GROQ_API_KEY') ? (
                   <>Add <code>GROQ_API_KEY</code> to your <code>.env.local</code></>
                 ) : error}
+                {anonLimited ? (
+                  <button className="btn btn-primary forge-retry" style={{ minHeight: 44 }} onClick={async () => {
+                    const { error: loginError } = await supabase.auth.signInWithOAuth({
+                      provider: 'google',
+                      options: { redirectTo: `${window.location.origin}/auth/callback?next=/app` },
+                    })
+                    if (loginError) setError(loginError.message)
+                  }}>Sign in with Google</button>
+                ) : <button className="btn btn-primary forge-retry" onClick={handleStart}>Try again</button>}
               </div>
             )}
 
@@ -385,8 +440,8 @@ export default function AppPage() {
 
         {/* ── LOADING QUESTIONS ── */}
         {step === STEPS.LOADING_Q && (
-          <div className="forge-step forge-loading-step">
-            <div className="forge-spinner" />
+          <div className="forge-step forge-loading-step" role="status">
+            <div className="forge-spinner" aria-hidden="true" />
             <p className="forge-loading-text">Analyzing your prompt…</p>
           </div>
         )}
@@ -458,8 +513,8 @@ export default function AppPage() {
 
         {/* ── LOADING RESULT ── */}
         {step === STEPS.LOADING_R && (
-          <div className="forge-step forge-loading-step">
-            <div className="forge-spinner" />
+          <div className="forge-step forge-loading-step" role="status">
+            <div className="forge-spinner" aria-hidden="true" />
             <p className="forge-loading-text">Forging your prompt…</p>
           </div>
         )}
@@ -523,9 +578,9 @@ export default function AppPage() {
               <button className="btn btn-ghost" onClick={handleReset}>
                 ← Try another prompt
               </button>
-              <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
+              {user && <button className="btn btn-primary" onClick={() => router.push('/dashboard')}>
                 View history →
-              </button>
+              </button>}
             </div>
           </div>
         )}

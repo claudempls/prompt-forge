@@ -11,14 +11,13 @@ jest.mock('next/link', () => {
 describe('Hero component', () => {
   it('renders the main headline', () => {
     render(<Hero />)
-    expect(screen.getByText('Better prompts,')).toBeInTheDocument()
-    expect(screen.getByText('before you ask.')).toBeInTheDocument()
+    expect(screen.getByText('Stop rewriting prompts.')).toBeInTheDocument()
+    expect(screen.getByText('Answer a few questions instead.')).toBeInTheDocument()
   })
 
-  it('renders the waitlist form', () => {
+  it('links to the free forge flow', () => {
     render(<Hero />)
-    expect(screen.getByPlaceholderText('you@example.com')).toBeInTheDocument()
-    expect(screen.getByText('Notify me')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /Forge my first prompt/ })).toHaveAttribute('href', '/app')
   })
 
   it('renders the "how it works" link', () => {
@@ -26,17 +25,18 @@ describe('Hero component', () => {
     expect(screen.getByText('See how it works')).toBeInTheDocument()
   })
 
-  it('renders all AI provider pills', () => {
+  it('renders target model pills', () => {
     render(<Hero />)
+    expect(screen.getByText('Writes prompts for')).toBeInTheDocument()
     expect(screen.getByText('Gemini')).toBeInTheDocument()
-    expect(screen.getByText('OpenAI')).toBeInTheDocument()
-    expect(screen.getByText('Anthropic')).toBeInTheDocument()
-    expect(screen.getByText('Groq')).toBeInTheDocument()
+    expect(screen.getByText('ChatGPT')).toBeInTheDocument()
+    expect(screen.getByText('Claude')).toBeInTheDocument()
+    expect(screen.getByText('local LLMs')).toBeInTheDocument()
   })
 
   it('renders the eyebrow badge', () => {
     render(<Hero />)
-    expect(screen.getByText(/Free early access opens soon/)).toBeInTheDocument()
+    expect(screen.getByText(/prompts without signup/)).toBeInTheDocument()
   })
 
   it('renders the product mockup window', () => {

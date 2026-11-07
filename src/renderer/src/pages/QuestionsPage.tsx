@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type { AppState } from '../App'
-import { enhancePrompt, extractPreferenceTags } from '../lib/gemini'
+import { enhancePrompt, extractPreferenceTags } from '../lib/groq'
 import { getPreferences, setLanguage, store } from '../lib/store'
 import type { UserPreferences } from '../lib/store'
 import { useT } from '../lib/i18n'
@@ -93,7 +93,7 @@ export default function QuestionsPage({ state, update }: Props) {
     }
   }
 
-  async function savePreferencesAsync(result: import('../lib/gemini').EnhanceResult) {
+  async function savePreferencesAsync(result: import('../lib/groq').EnhanceResult) {
     try {
       const { topicCategory, enhancedPrompt, originalScore, enhancedScore } = result
       const tags = await extractPreferenceTags(apiKey, questions, answers, topicCategory)
